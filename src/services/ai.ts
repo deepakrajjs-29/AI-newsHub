@@ -1,8 +1,14 @@
 import OpenAI from "openai";
 import { z } from "zod";
 
+const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || "";
+const baseURL = process.env.GEMINI_API_KEY
+  ? "https://generativelanguage.googleapis.com/v1beta/openai/"
+  : undefined;
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
+  apiKey,
+  baseURL,
 });
 
 export const AiProcessedSchema = z.object({
@@ -17,16 +23,16 @@ export const AiProcessedSchema = z.object({
 export type AiProcessedResult = z.infer<typeof AiProcessedSchema>;
 
 /**
- * Generates short/long summaries, categories, tags, and SEO metadata using OpenAI.
+ * Generates short/long summaries, categories, tags, and SEO metadata using OpenAI or Gemini.
  */
 export async function summarizeArticleWithAI(
   title: string,
   content: string,
   categoriesList: string[]
 ): Promise<AiProcessedResult | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.warn("Missing OPENAI_API_KEY. Skipping AI summarization.");
+  const activeKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+  if (!activeKey) {
+    console.warn("Missing GEMINI_API_KEY or OPENAI_API_KEY. Skipping AI summarization.");
     return null;
   }
 
@@ -47,8 +53,9 @@ Return ONLY the JSON object. Do not include markdown code block formatting (like
   const userPrompt = `Title: ${title}\n\nContent:\n${trimmedContent}`;
 
   try {
+    const defaultModel = process.env.GEMINI_API_KEY ? "gemini-1.5-flash" : "gpt-4o-mini";
     const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: process.env.OPENAI_MODEL || defaultModel,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
