@@ -160,7 +160,7 @@ export default async function HomePage() {
       </section>
 
       {/* ─────────────────── SINUSOIDAL CATEGORY WAVE ─────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-8 border-t border-border/40 relative z-10 overflow-hidden select-none">
+      <section className="max-w-5xl mx-auto px-4 py-8 border-t border-border/40 relative z-10 overflow-hidden select-none reveal-on-scroll">
         
         {/* Sinusoidal Wave categories container */}
         <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 py-10">
@@ -201,7 +201,7 @@ export default async function HomePage() {
           <div className="lg:col-span-7 space-y-6">
             
             {/* Real Dynamic Signals Stream */}
-            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm">
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm reveal-on-scroll">
               <div className="flex items-center justify-between text-xs border-b border-border/40 pb-3">
                 <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
                   <Rss className="h-4.5 w-4.5 text-indigo-400" /> Ingested Signals Stream
@@ -233,7 +233,7 @@ export default async function HomePage() {
             </div>
 
             {/* Model Benchmarks Matrix */}
-            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm overflow-x-auto">
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm overflow-x-auto reveal-on-scroll">
               <div className="flex items-center justify-between text-xs border-b border-border/40 pb-3">
                 <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
                   <BarChart3 className="h-4.5 w-4.5 text-purple-400" /> LLM Benchmarks Reference
@@ -280,7 +280,7 @@ export default async function HomePage() {
           <div className="lg:col-span-5 space-y-6">
             
             {/* Database Pulse Stats */}
-            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm">
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm reveal-on-scroll">
               <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
                 <Layers className="h-4.5 w-4.5 text-pink-400" /> Database Pulse Stats
               </h3>
@@ -297,7 +297,7 @@ export default async function HomePage() {
             </div>
 
             {/* Startup Funding Signals */}
-            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm">
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm reveal-on-scroll">
               <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
                 <Sparkles className="h-4.5 w-4.5 text-yellow-500" /> Startup Ingestion Feed
               </h3>
@@ -334,7 +334,7 @@ export default async function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch text-left">
           {/* Free Tier */}
-          <div className="p-6 sm:p-8 rounded-2xl border border-border bg-card/45 backdrop-blur-sm flex flex-col justify-between hover:border-foreground/10 transition shadow-sm">
+          <div className="p-6 sm:p-8 rounded-2xl border border-border bg-card/45 hover-card-bounce backdrop-blur-sm flex flex-col justify-between transition shadow-sm reveal-on-scroll">
             <div className="space-y-6">
               <div className="space-y-1">
                 <h3 className="text-base font-extrabold text-foreground">Free Aggregator</h3>
@@ -368,7 +368,7 @@ export default async function HomePage() {
           </div>
 
           {/* Pro Tier */}
-          <div className="p-6 sm:p-8 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.01] dark:bg-indigo-950/[0.01] backdrop-blur-sm flex flex-col justify-between relative shadow-md ring-1 ring-indigo-500/20">
+          <div className="p-6 sm:p-8 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.01] dark:bg-indigo-950/[0.01] hover-card-bounce backdrop-blur-sm flex flex-col justify-between relative shadow-md ring-1 ring-indigo-500/20 reveal-on-scroll">
             <div className="absolute top-0 right-6 -translate-y-1/2 bg-foreground text-background text-[9px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
               <Sparkles className="h-3 w-3 text-yellow-500 animate-pulse" /> RECOMMENDED
             </div>

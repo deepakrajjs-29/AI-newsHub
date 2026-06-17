@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
+import { AudioProvider } from "@/lib/AudioContext";
+import FloatingMusicControl from "@/components/audio/FloatingMusicControl";
+import ScrollReveal from "@/components/common/ScrollReveal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,12 +59,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200`}
       >
-        <Header />
-        <main className="flex-1 flex flex-col">
-          {children}
-        </main>
-        <Footer />
+        <AudioProvider>
+          <ScrollReveal />
+          <Header />
+          <main className="flex-1 flex flex-col">
+            {children}
+          </main>
+          <Footer />
+          <FloatingMusicControl />
+        </AudioProvider>
       </body>
     </html>
   );
 }
+
+

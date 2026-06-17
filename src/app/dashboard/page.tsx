@@ -21,10 +21,20 @@ import {
   Menu,
   X,
   PlusCircle,
+  Music,
+  Search,
+  Volume2,
+  VolumeX,
+  Play,
+  Pause,
+  SkipForward,
+  SkipBack,
 } from "lucide-react";
 import Link from "next/link";
+import { useAudio } from "@/lib/AudioContext";
 
-type Tab = "overview" | "bookmarks" | "feeds" | "billing" | "profile";
+
+type Tab = "overview" | "bookmarks" | "feeds" | "billing" | "profile" | "music";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -35,6 +45,23 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Background Music state
+  const {
+    isPlaying,
+    currentTrack,
+    currentTrackIndex,
+    volume,
+    setVolume,
+    isMuted,
+    setIsMuted,
+    togglePlay,
+    nextTrack,
+    prevTrack,
+    playTrack,
+    tracks
+  } = useAudio();
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Profile Edit Form State
   const [fullName, setFullName] = useState("");
@@ -286,7 +313,8 @@ export default function DashboardPage() {
             {[
               { id: "overview", label: "Brewing Room", icon: Cpu },
               { id: "bookmarks", label: "Personal Vault", icon: Bookmark },
-              { id: "feeds", label: "Custom Feeds", icon: Globe }
+              { id: "feeds", label: "Custom Feeds", icon: Globe },
+              { id: "music", label: "Music Lounge", icon: Music }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -833,6 +861,206 @@ export default function DashboardPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {/* ────────────────── MUSIC LOUNGE TAB PANEL ────────────────── */}
+          {activeTab === "music" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-extrabold tracking-tight">Music Lounge</h2>
+                <p className="text-xs text-muted-foreground">
+                  Select and control calming ambient background music to focus while reading or browsing.
+                </p>
+              </div>
+
+              {/* Master Controls Section */}
+              <div className="p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                  <div className="relative group shrink-0 select-none">
+                    <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 opacity-20 blur group-hover:opacity-30 transition duration-300" />
+                    <div className="relative w-16 h-16 rounded-2xl bg-background flex items-center justify-center border border-border">
+                      {isPlaying ? (
+                        <div className="flex items-end justify-between h-6 w-8 px-1.5 pb-0.5">
+                          <span className="audio-wave-bar" />
+                          <span className="audio-wave-bar" />
+                          <span className="audio-wave-bar" />
+                          <span className="audio-wave-bar" />
+                        </div>
+                      ) : (
+                        <Music className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">Currently Playing</span>
+                    <h3 className="text-base font-extrabold text-foreground truncate mt-0.5">{currentTrack?.title}</h3>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{currentTrack?.artist} • {currentTrack?.category}</p>
+                  </div>
+                </div>
+
+                {/* Player actions */}
+                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end">
+                  {/* Playback Control Bar */}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={prevTrack}
+                      className="p-2 rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/30 transition"
+                      title="Previous Track"
+                    >
+                      <SkipBack className="h-4.5 w-4.5" />
+                    </button>
+                    <button
+                      onClick={togglePlay}
+                      className="p-3.5 rounded-full bg-indigo-500 text-white hover:bg-indigo-400 hover:scale-105 active:scale-95 transition-all duration-200 shadow-md shadow-indigo-500/20"
+                      title={isPlaying ? "Pause" : "Play"}
+                    >
+                      {isPlaying ? (
+                        <Pause className="h-4.5 w-4.5 fill-current" />
+                      ) : (
+                        <Play className="h-4.5 w-4.5 fill-current translate-x-[0.5px]" />
+                      )}
+                    </button>
+                    <button
+                      onClick={nextTrack}
+                      className="p-2 rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/30 transition"
+                      title="Next Track"
+                    >
+                      <SkipForward className="h-4.5 w-4.5" />
+                    </button>
+                  </div>
+
+                  {/* Volume Control Bar */}
+                  <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl border border-border bg-background/50">
+                    <button
+                      onClick={() => setIsMuted(!isMuted)}
+                      className="text-muted-foreground hover:text-foreground transition"
+                    >
+                      {isMuted || volume === 0 ? (
+                        <VolumeX className="h-4.5 w-4.5 text-rose-400" />
+                      ) : (
+                        <Volume2 className="h-4.5 w-4.5 text-indigo-400" />
+                      )}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => {
+                        setVolume(parseFloat(e.target.value));
+                        if (isMuted) setIsMuted(false);
+                      }}
+                      className="h-1 w-24 cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Track Search & Library Grid */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <h3 className="font-extrabold text-xs uppercase tracking-wider text-muted-foreground select-none">
+                    Track Library
+                  </h3>
+                  <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search tracks or genres..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl text-xs placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tracks
+                    .filter(t => 
+                      t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      t.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      t.artist.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .map((track, idx) => {
+                      const isActive = currentTrackIndex === idx;
+                      const isCurrentPlaying = isActive && isPlaying;
+
+                      return (
+                        <div
+                          key={track.url}
+                          onClick={() => playTrack(idx)}
+                          className={`p-5 rounded-2xl border cursor-pointer hover-card-bounce transition-all duration-300 relative group overflow-hidden ${
+                            isActive
+                              ? 'bg-indigo-500/[0.03] border-indigo-500/35'
+                              : 'bg-card/45 border-border hover:border-zinc-700/80'
+                          }`}
+                        >
+                          {/* Decorative track gradient background */}
+                          <div className={`absolute -inset-2.5 bg-gradient-to-tr opacity-[0.02] transition-opacity group-hover:opacity-[0.06] duration-500 ${
+                            idx % 3 === 0
+                              ? 'from-indigo-500 to-purple-500'
+                              : idx % 3 === 1
+                              ? 'from-emerald-500 to-teal-500'
+                              : 'from-pink-500 to-indigo-500'
+                          }`} />
+
+                          <div className="relative flex flex-col h-full justify-between gap-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                  isActive ? 'bg-indigo-500/10 text-indigo-400' : 'bg-muted text-muted-foreground'
+                                }`}>
+                                  {track.category}
+                                </span>
+                                <h4 className="font-extrabold text-sm text-foreground truncate mt-2 max-w-[180px]">
+                                  {track.title}
+                                </h4>
+                                <p className="text-xs text-muted-foreground truncate mt-0.5 font-medium">
+                                  {track.artist}
+                                </p>
+                              </div>
+                              
+                              {/* Round status indicator button */}
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                isActive
+                                  ? 'bg-indigo-500/15 text-indigo-400 scale-105'
+                                  : 'bg-background border border-border text-muted-foreground group-hover:text-foreground group-hover:scale-105'
+                              }`}>
+                                {isCurrentPlaying ? (
+                                  <Pause className="h-3.5 w-3.5 fill-current" />
+                                ) : (
+                                  <Play className="h-3.5 w-3.5 fill-current translate-x-[0.5px]" />
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold pt-3 border-t border-border/40">
+                              <span>{track.duration} min</span>
+                              {isActive && (
+                                <span className="text-indigo-400 font-bold flex items-center gap-1">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-ping" />
+                                  {isCurrentPlaying ? 'Playing' : 'Selected'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {tracks.filter(t => 
+                    t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    t.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    t.artist.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).length === 0 && (
+                    <div className="col-span-full py-12 text-center text-xs text-muted-foreground border border-dashed border-border rounded-2xl">
+                      No tracks found matching "{searchQuery}"
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

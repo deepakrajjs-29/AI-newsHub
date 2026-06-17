@@ -42,7 +42,7 @@ export default function NewsCard({ article, featured = false }: NewsCardProps) {
 
   if (featured) {
     return (
-      <div className="group relative grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md">
+      <div className="group relative grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 rounded-2xl border border-border bg-card/45 hover-card-bounce backdrop-blur-sm transition-all duration-300 overflow-hidden shadow-sm">
         {/* Featured Image */}
         <div className="lg:col-span-7 relative aspect-video lg:aspect-auto lg:h-80 w-full rounded-xl overflow-hidden bg-muted">
           {article.featuredImage ? (
@@ -110,7 +110,7 @@ export default function NewsCard({ article, featured = false }: NewsCardProps) {
   }
 
   return (
-    <div className="group flex flex-col justify-between p-5 rounded-xl border border-border bg-card hover:bg-muted/20 hover:border-border/80 transition-all duration-300 shadow-sm hover:shadow">
+    <div className="group flex flex-col justify-between p-5 rounded-xl border border-border bg-card/45 hover-card-bounce backdrop-blur-sm transition-all duration-300 shadow-sm">
       <div className="space-y-4">
         {/* Cover image */}
         <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-muted">

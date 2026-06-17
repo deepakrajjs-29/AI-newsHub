@@ -114,7 +114,7 @@ export default function PricingPage() {
         <div className="absolute top-1/3 right-1/4 w-96 h-96 rounded-full bg-indigo-500/10 blur-[120px]"></div>
       </div>
 
-      <div className="text-center space-y-4 max-w-3xl mx-auto relative z-10">
+      <div className="text-center space-y-4 max-w-3xl mx-auto relative z-10 reveal-on-scroll">
         <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-card/60 text-xs text-muted-foreground shadow-sm">
           <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
           <span>Flexible Plans for AI Professionals</span>
@@ -130,7 +130,7 @@ export default function PricingPage() {
       {/* Plans comparison cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto relative z-10">
         {/* FREE PLAN */}
-        <div className="p-8 rounded-2xl border border-border bg-card/40 backdrop-blur-sm flex flex-col justify-between hover:border-foreground/10 transition-colors duration-200 shadow-lg">
+        <div className="p-8 rounded-2xl border border-border bg-card/45 hover-card-bounce backdrop-blur-sm flex flex-col justify-between transition shadow-lg reveal-on-scroll">
           <div className="space-y-6">
             <div className="space-y-2">
               <h3 className="text-lg font-extrabold tracking-tight">Free Aggregator</h3>
@@ -164,7 +164,7 @@ export default function PricingPage() {
         </div>
 
         {/* PRO PLAN */}
-        <div className="p-8 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.02] dark:bg-indigo-950/[0.02] backdrop-blur-sm flex flex-col justify-between relative shadow-xl ring-1 ring-indigo-500/20">
+        <div className="p-8 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.02] dark:bg-indigo-950/[0.02] hover-card-bounce backdrop-blur-sm flex flex-col justify-between relative shadow-xl ring-1 ring-indigo-500/20 reveal-on-scroll">
           <div className="absolute top-0 right-8 -translate-y-1/2 bg-foreground text-background text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
             <Sparkles className="h-3.5 w-3.5 text-yellow-500" /> RECOMMENDED
           </div>
@@ -187,6 +187,7 @@ export default function PricingPage() {
               ))}
             </ul>
           </div>
+
 
           <button
             onClick={handleSubscribeClick}
