@@ -76,6 +76,14 @@ export default function Header() {
     }
   }
 
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/auth")
+  ) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full glassmorphism border-b border-border transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

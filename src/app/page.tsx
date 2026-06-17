@@ -13,450 +13,583 @@ import {
   Rss,
   CheckCircle2,
   ChevronRight,
-  TrendingUp,
   Clock,
   Layers,
+  Calendar,
+  Lock,
+  ExternalLink,
+  Volume2,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  // Lightweight fetch — only what the landing page needs
-  const [totalArticles, totalSources, previewArticles, trendingArticles] =
-    await Promise.all([
-      prisma.article.count({ where: { status: { not: "failed" } } }),
-      prisma.source.count({ where: { active: true } }),
-      // Latest 3 articles for "Latest Updates" preview
-      prisma.article.findMany({
-        where: { status: { not: "failed" } },
-        orderBy: { publishedAt: "desc" },
-        take: 3,
-        include: { category: { select: { name: true, slug: true } } },
-      }),
-      // Top 3 trending (most bookmarked)
-      prisma.article.findMany({
-        where: { status: { not: "failed" } },
-        orderBy: [{ bookmarks: { _count: "desc" } }, { publishedAt: "desc" }],
-        take: 3,
-        include: { category: { select: { name: true, slug: true } } },
-      }),
-    ]);
-
-  // ── Stats ──────────────────────────────────────────────────────────────────
-  const stats = [
-    { label: "Articles Aggregated", value: `${totalArticles.toLocaleString()}+`, icon: Layers },
-    { label: "Active RSS Sources", value: `${totalSources}`, icon: Rss },
-    { label: "Tech Categories", value: "9", icon: BarChart3 },
-    { label: "Refresh Interval", value: "30 min", icon: Clock },
-  ];
-
-  // ── Features ───────────────────────────────────────────────────────────────
-  const features = [
-    {
-      icon: Rss,
-      title: "Real-Time RSS Aggregation",
-      description:
-        "Pulls from OpenAI, Anthropic, Google, Hugging Face, AWS, NVIDIA, TechCrunch, Wired and more — every 30 minutes.",
-      accent: "from-orange-500 to-amber-500",
-      glow: "group-hover:shadow-orange-500/10",
-    },
-    {
-      icon: Cpu,
-      title: "AI-Powered Summaries",
-      description:
-        "Every article is automatically summarized by Gemini AI. Get the key insight without reading thousands of words.",
-      accent: "from-indigo-500 to-blue-500",
-      glow: "group-hover:shadow-indigo-500/10",
-    },
-    {
-      icon: Search,
-      title: "Full-Text Search",
-      description:
-        "Search across titles, summaries, tags, source names, and categories to find exactly what you need instantly.",
-      accent: "from-blue-500 to-cyan-500",
-      glow: "group-hover:shadow-blue-500/10",
-    },
-    {
-      icon: BarChart3,
-      title: "Smart Categorization",
-      description:
-        "AI classifies every article into one of 9 categories: AI, ML, Generative AI, Cloud, Cybersecurity, Dev Tools, Startups, Data Science, and Technology.",
-      accent: "from-emerald-500 to-teal-500",
-      glow: "group-hover:shadow-emerald-500/10",
-    },
-    {
-      icon: Globe,
-      title: "Multi-Source Coverage",
-      description:
-        "From research papers and product launches to funding rounds and security advisories — the full AI & tech ecosystem in one place.",
-      accent: "from-purple-500 to-violet-500",
-      glow: "group-hover:shadow-purple-500/10",
-    },
-    {
-      icon: Shield,
-      title: "Duplicate Detection",
-      description:
-        "Smart similarity-based deduplication ensures you never see the same story twice, even when covered by multiple outlets.",
-      accent: "from-rose-500 to-pink-500",
-      glow: "group-hover:shadow-rose-500/10",
-    },
-  ];
-
-  // ── Why choose ─────────────────────────────────────────────────────────────
-  const reasons = [
-    "No social media noise or opinion pieces",
-    "Only verified RSS sources from industry leaders",
-    "AI summaries save hours of reading time",
-    "9 focused categories with date-based filtering",
-    "Search across 1,500+ aggregated articles",
-    "Automatic updates every 30 minutes",
-  ];
+  // Fetch actual data from the database to populate all landing page sections dynamically
+  const [
+    totalArticles,
+    totalSources,
+    latestArticles,
+    startupArticles,
+    categories,
+  ] = await Promise.all([
+    // Real count of active processed/pending articles
+    prisma.article.count({ where: { status: { not: "failed" } } }),
+    // Real count of active sources
+    prisma.source.count({ where: { active: true } }),
+    // Latest 3 articles for the "Freshly Brewed Today" showcase
+    prisma.article.findMany({
+      where: { status: { not: "failed" } },
+      orderBy: { publishedAt: "desc" },
+      take: 3,
+      include: { category: { select: { name: true, slug: true } } },
+    }),
+    // Latest 2 articles in the Startups category for the "Startup Radar" showcase
+    prisma.article.findMany({
+      where: { status: { not: "failed" }, category: { slug: "startups" } },
+      orderBy: { publishedAt: "desc" },
+      take: 2,
+      include: { category: { select: { name: true, slug: true } } },
+    }),
+    // Categories list for pills
+    prisma.category.findMany({
+      select: { name: true, slug: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
-    <div className="relative overflow-x-hidden">
-      {/* ─────────────────────────── HERO ─────────────────────────────── */}
-      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
-        {/* Layered background glows */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-indigo-600/8 blur-[140px]" />
-          <div className="absolute top-[20%] left-[5%] w-[500px] h-[500px] rounded-full bg-purple-600/6 blur-[120px]" />
-          <div className="absolute top-[10%] right-[5%] w-[400px] h-[400px] rounded-full bg-blue-600/6 blur-[100px]" />
-          {/* Subtle dot grid */}
-          <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(hsl(var(--foreground))_1px,transparent_1px)] [background-size:32px_32px]" />
-        </div>
+    <div className="relative overflow-x-hidden min-h-screen bg-background">
+      {/* Background glow meshes */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full bg-indigo-600/5 blur-[120px] dark:bg-indigo-600/5" />
+        <div className="absolute top-[20%] left-[5%] w-[450px] h-[450px] rounded-full bg-purple-600/3 blur-[100px] dark:bg-purple-600/3" />
+        <div className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(hsl(var(--foreground))_1px,transparent_1px)] [background-size:24px_24px]" />
+      </div>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          {/* Live badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-card/60 text-xs text-muted-foreground mb-8 shadow-sm backdrop-blur-sm">
+      {/* ─────────────────────────── HERO SECTION ─────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* Left Side: Copywriting */}
+        <div className="lg:col-span-7 space-y-6 text-left">
+          {/* Live Status Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/40 text-[10px] sm:text-xs text-muted-foreground shadow-sm backdrop-blur-sm">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
             </span>
-            <span className="font-medium text-emerald-500">Live</span>
+            <span className="font-semibold text-indigo-500">Core Aggregator Online</span>
             <span className="text-border">·</span>
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            <span>Powered by Gemini AI · Updated every 30 minutes</span>
+            <Clock className="h-3 w-3" />
+            <span>Updated hourly</span>
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-foreground leading-[1.05] mb-6 max-w-5xl mx-auto">
-            Your{" "}
-            <span className="relative inline-block">
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
-                AI & Tech
-              </span>
-            </span>{" "}
-            News Command Center
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-foreground leading-[1.1]">
+            AI & Tech Intelligence{" "}
+            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Command Center
+            </span>
           </h1>
 
-          {/* Sub-headline */}
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-10">
-            Real-time aggregation from the world&apos;s top AI and technology
-            sources. AI-summarized, categorized, and fully searchable — all in
-            one focused platform.
+          {/* Description */}
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
+            Real-time feed aggregation from 16 industry-leading sources.
+            Deduplicated, classified into 9 categories, and summarized using
+            advanced AI. Get the raw engineering signal, save hours of reading time.
           </p>
 
-          {/* CTA row */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-16">
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap gap-4 pt-2">
             <Link
               href="/news"
-              id="hero-explore-btn"
-              className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm shadow-md hover:shadow-indigo-500/20 hover:scale-[1.01] transition duration-200"
             >
-              Explore All News
+              Start Ingesting News
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
-              href="/admin"
-              id="hero-dashboard-btn"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl border border-border bg-card/50 backdrop-blur-sm font-semibold text-sm hover:bg-muted/50 hover:border-border/80 transition-all duration-200"
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-border bg-card/30 backdrop-blur-sm font-semibold text-sm hover:bg-muted/30 transition duration-200"
             >
-              View Dashboard
+              Access Dashboard
             </Link>
-          </div>
-
-          {/* Stats strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {stats.map((stat) => (
-              <div
-                key={stat.label}
-                className="flex flex-col items-center p-4 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm"
-              >
-                <stat.icon className="h-4 w-4 text-muted-foreground mb-2" />
-                <span className="text-2xl font-black text-foreground tracking-tight">
-                  {stat.value}
-                </span>
-                <span className="text-[10px] text-muted-foreground mt-0.5 text-center leading-tight">
-                  {stat.label}
-                </span>
-              </div>
-            ))}
           </div>
         </div>
 
-        {/* Bottom gradient fade into next section */}
-        <div
-          aria-hidden
-          className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none"
-        />
+        {/* Right Side: Animated SVG Holographic Signal Core */}
+        <div className="lg:col-span-5 flex items-center justify-center">
+          <div className="relative w-full max-w-[350px] aspect-square rounded-2xl border border-border bg-card/30 backdrop-blur-sm flex items-center justify-center overflow-hidden shadow-lg">
+            {/* Spinning background orbital rings */}
+            <div className="absolute w-[80%] h-[80%] rounded-full border border-dashed border-indigo-500/10 animate-[spin_60s_linear_infinite]" />
+            <div className="absolute w-[60%] h-[60%] rounded-full border border-dashed border-purple-500/10 animate-[spin_30s_linear_infinite_reverse]" />
+
+            {/* Glowing Core */}
+            <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-indigo-500/30 flex items-center justify-center shadow-[0_0_40px_rgba(99,102,241,0.15)] z-10">
+              <Cpu className="h-10 w-10 text-indigo-400 animate-pulse" />
+              <div className="absolute inset-0 rounded-full bg-indigo-500/10 blur-sm animate-ping" />
+            </div>
+
+            {/* Floating Tags (representing incoming RSS signals) */}
+            <div className="absolute inset-x-0 bottom-4 top-0 pointer-events-none overflow-hidden z-20 flex flex-col justify-end items-center">
+              <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes float-up-tag-1 {
+                  0% { transform: translateY(60px) scale(0.8); opacity: 0; }
+                  20% { opacity: 0.8; }
+                  85% { opacity: 0.8; }
+                  100% { transform: translateY(-220px) scale(1.05); opacity: 0; }
+                }
+                .floating-tag-1 { animation: float-up-tag-1 7s infinite linear; }
+                .floating-tag-2 { animation: float-up-tag-1 8.5s infinite linear 2s; }
+                .floating-tag-3 { animation: float-up-tag-1 6s infinite linear 3.8s; }
+                .floating-tag-4 { animation: float-up-tag-1 9s infinite linear 5.5s; }
+              `}} />
+              
+              <span className="floating-tag-1 absolute text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full border border-indigo-500/20 bg-indigo-950/60 text-indigo-300">#openai</span>
+              <span className="floating-tag-2 absolute text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full border border-purple-500/20 bg-purple-950/60 text-purple-300">#arxiv-feed</span>
+              <span className="floating-tag-3 absolute text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full border border-blue-500/20 bg-blue-950/60 text-blue-300">#huggingface</span>
+              <span className="floating-tag-4 absolute text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-950/60 text-emerald-300">#startup-funding</span>
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* ──────────────────── LATEST UPDATES PREVIEW ─────────────────────── */}
-      {previewArticles.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold mb-3">
-                <Zap className="h-3.5 w-3.5 fill-indigo-400/30" />
-                Latest Updates
+      {/* ─────────────────── TIMEFRAMES OF INTELLIGENCE ─────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-border/50">
+        <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Timeframes of Intelligence</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            We summarize noise at three distinct intervals so you always get immediate signal and historical context.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Today */}
+          <div className="p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <h3 className="text-lg font-bold">What Changed Today</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Real-time ingestion updates. Access hourly summaries of product releases, tech logs, and announcements as they go live.
+            </p>
+            <ul className="space-y-2 pt-2 text-xs font-semibold text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>Hourly RSS checks</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>Executive 100-word summaries</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Card 2: Week */}
+          <div className="p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+              <Zap className="h-5 w-5" />
+            </div>
+            <h3 className="text-lg font-bold">What Changed This Week</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Weekly digests compiling research breakthroughs, framework launches, and major corporate funding benchmarks.
+            </p>
+            <ul className="space-y-2 pt-2 text-xs font-semibold text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>Weekly trend compilation</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>Cross-feed duplicate removal</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Card 3: Month */}
+          <div className="p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+            <h3 className="text-lg font-bold">What Changed This Month</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Monthly macroeconomic summaries identifying technology shifts, consolidations, and strategic engineering trajectories.
+            </p>
+            <ul className="space-y-2 pt-2 text-xs font-semibold text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>Category telemetry breakdown</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>In-depth 300-word analysis</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────── CORE PILLARS OF SIGNAL FEED ─────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-border/50">
+        <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Core Pillars of Platform Signal Feed</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            We parse, classify, and isolate feeds into three primary channels that drive tech intelligence.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Pillar 1 */}
+          <div className="p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-indigo-400 font-bold text-sm">
+                <Cpu className="h-4.5 w-4.5" />
+                <span>AI & ML Research</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Fresh from the feeds
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                A glimpse of what&apos;s happening right now in AI & Tech.
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                arXiv preprints, Hugging Face models, OpenAI updates, and Anthropic API logs. Focuses on foundational research and API shifts.
               </p>
             </div>
-            <Link
-              href="/news"
-              id="preview-viewall-btn"
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors group"
-            >
-              View all {totalArticles.toLocaleString()}+ articles
-              <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {previewArticles.map((article) => (
-              <NewsCard key={article.id} article={article as any} />
-            ))}
-          </div>
-
-          {/* Mobile "view all" */}
-          <div className="mt-8 text-center sm:hidden">
-            <Link
-              href="/news"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              View all {totalArticles.toLocaleString()}+ articles
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* ───────────────────────── FEATURES ──────────────────────────────── */}
-      <section className="relative py-24 overflow-hidden">
-        {/* Section background glow */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-purple-600/5 blur-[120px]" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section header */}
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-semibold mb-4">
-              <Cpu className="h-3.5 w-3.5" />
-              Platform Capabilities
+            <div className="p-3.5 rounded-xl bg-background/50 border border-border/50 text-[11px] font-mono leading-relaxed text-muted-foreground">
+              <span className="text-indigo-400 font-bold block mb-1">RECENT SIGNAL</span>
+              Gemini 1.5 Pro updates expand native context to 2.0M tokens.
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-              Everything you need to{" "}
-              <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-                stay ahead
-              </span>
-            </h2>
-            <p className="text-muted-foreground text-base leading-relaxed">
-              Built to surface the signal, not the noise. One focused platform
-              for the AI and tech ecosystem.
-            </p>
           </div>
 
-          {/* Feature grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className={`group relative p-6 rounded-2xl border border-border bg-card hover:bg-muted/20 hover:border-border/80 transition-all duration-300 shadow-sm hover:shadow-xl ${feature.glow}`}
-              >
-                {/* Icon */}
-                <div
-                  className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${feature.accent} mb-4 shadow-sm`}
-                >
-                  <feature.icon className="h-5 w-5 text-white" />
-                </div>
-                <h3 className="font-bold text-base mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
+          {/* Pillar 2 */}
+          <div className="p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-purple-400 font-bold text-sm">
+                <Globe className="h-4.5 w-4.5" />
+                <span>Developer Tools & Cloud</span>
               </div>
-            ))}
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Infrastructure logs, cybersecurity vulnerabilities, cloud releases (AWS/Nvidia), and framework updates. Focuses on developer velocity.
+              </p>
+            </div>
+            <div className="p-3.5 rounded-xl bg-background/50 border border-border/50 text-[11px] font-mono leading-relaxed text-muted-foreground">
+              <span className="text-purple-400 font-bold block mb-1">RECENT SIGNAL</span>
+              AWS releases SDK integration enhancements for serverless workers.
+            </div>
+          </div>
+
+          {/* Pillar 3 */}
+          <div className="p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-pink-400 font-bold text-sm">
+                <BarChart3 className="h-4.5 w-4.5" />
+                <span>Startups & Markets</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Venture capital investments, acquisitions, mergers, and product announcements. Focuses on tech ecosystem movement.
+              </p>
+            </div>
+            <div className="p-3.5 rounded-xl bg-background/50 border border-border/50 text-[11px] font-mono leading-relaxed text-muted-foreground">
+              <span className="text-pink-400 font-bold block mb-1">RECENT SIGNAL</span>
+              AI hardware startup secures $120M Series A for edge deployment computing.
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─────────────────── WHY CHOOSE + TRENDING ───────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          {/* Left: Why choose */}
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold mb-4">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Why This Platform
+      {/* ───────────────── LIVE SHOWCASE: DASHBOARD GRID ───────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-border/50">
+        <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+          <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest bg-indigo-500/10 px-3 py-1 rounded-full">
+            Dynamic Platform Showcase
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Live Ingested Signals</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            A real-time snapshot of the actual articles and statistics currently stored in our local database.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT COLUMN: News Streams & Benchmarks (7/12) */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Stream 1: Freshly Ingested Today */}
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm">
+              <div className="flex items-center justify-between text-xs border-b border-border/50 pb-3">
+                <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
+                  <Rss className="h-4.5 w-4.5 text-indigo-500" /> Ingested Signals Stream
+                </h3>
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                  Latest DB Ingests
+                </span>
+              </div>
+              
+              <div className="space-y-3">
+                {latestArticles.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-4 text-center">No articles available. Run RSS ingestion to fetch.</p>
+                ) : (
+                  latestArticles.map((art) => (
+                    <div key={art.id} className="flex gap-3 text-xs leading-relaxed group">
+                      <span className="px-2 py-0.5 h-fit text-[9px] font-bold uppercase rounded bg-muted/65 text-indigo-400 shrink-0 border border-indigo-500/10">
+                        {art.category?.name || "News"}
+                      </span>
+                      <div className="space-y-1">
+                        <Link href={`/news/${art.slug}`} className="font-semibold text-foreground hover:text-indigo-400 transition line-clamp-1">
+                          {art.title}
+                        </Link>
+                        <p className="text-[11px] text-muted-foreground line-clamp-1">{art.summary}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-6">
-              Signal over noise,{" "}
-              <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                always.
-              </span>
-            </h2>
-            <p className="text-muted-foreground mb-8 leading-relaxed">
-              The AI and technology news space is crowded, noisy, and
-              fragmented. This platform aggregates, filters, and summarizes the
-              content that actually matters.
-            </p>
-            <ul className="space-y-3">
-              {reasons.map((reason) => (
-                <li key={reason} className="flex items-start gap-3">
-                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mt-0.5 shrink-0" />
-                  <span className="text-sm text-muted-foreground">{reason}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link
-                href="/news"
-                id="why-explore-btn"
-                className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-foreground text-background font-semibold text-sm hover:opacity-90 transition-all duration-200"
-              >
-                Start Exploring
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <Link
-                href="/news?category=artificial-intelligence"
-                id="why-ai-btn"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border bg-card font-semibold text-sm hover:bg-muted/40 transition-colors duration-200"
-              >
-                Browse AI News
-              </Link>
+
+            {/* Stream 2: Benchmark Matrix */}
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm overflow-x-auto">
+              <div className="flex items-center justify-between text-xs border-b border-border/50 pb-3">
+                <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
+                  <BarChart3 className="h-4.5 w-4.5 text-purple-500" /> LLM Benchmarks Reference
+                </h3>
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                  June 2026 Model Weights
+                </span>
+              </div>
+              
+              <table className="w-full text-left border-collapse text-xs font-medium">
+                <thead>
+                  <tr className="border-b border-border/40 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
+                    <th className="py-2 pr-4">Model</th>
+                    <th className="py-2 px-4">MMLU</th>
+                    <th className="py-2 px-4">Context</th>
+                    <th className="py-2 pl-4 text-right">Strategic Feature</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/20 text-muted-foreground">
+                  <tr className="hover:bg-muted/5">
+                    <td className="py-2.5 pr-4 font-bold text-foreground">GPT-4o</td>
+                    <td className="py-2.5 px-4 text-indigo-400 font-bold">88.7%</td>
+                    <td className="py-2.5 px-4 font-mono">128k</td>
+                    <td className="py-2.5 pl-4 text-right">Advanced vision & latency</td>
+                  </tr>
+                  <tr className="hover:bg-muted/5">
+                    <td className="py-2.5 pr-4 font-bold text-foreground">Claude 3.5 Sonnet</td>
+                    <td className="py-2.5 px-4 text-indigo-400 font-bold">88.7%</td>
+                    <td className="py-2.5 px-4 font-mono">200k</td>
+                    <td className="py-2.5 pl-4 text-right">Superb coding logic</td>
+                  </tr>
+                  <tr className="hover:bg-muted/5">
+                    <td className="py-2.5 pr-4 font-bold text-foreground">Gemini 1.5 Pro</td>
+                    <td className="py-2.5 px-4 text-indigo-400 font-bold">85.9%</td>
+                    <td className="py-2.5 px-4 font-mono">2.0M</td>
+                    <td className="py-2.5 pl-4 text-right">Huge needle-in-a-haystack</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Right: Trending stories teaser */}
-          {trendingArticles.length > 0 && (
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-semibold mb-4">
-                <TrendingUp className="h-3.5 w-3.5" />
-                Trending Stories
-              </div>
-              <h3 className="text-xl font-bold mb-5">
-                What people are reading
+          {/* RIGHT COLUMN: Database Pulse, Tech categories & Startup signals (5/12) */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Widget 1: Ingest Metrics (Pulse) */}
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm">
+              <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
+                <Layers className="h-4.5 w-4.5 text-pink-500" /> Database Pulse Stats
               </h3>
-              <div className="space-y-3">
-                {trendingArticles.map((article, idx) => (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3.5 rounded-xl bg-background/50 border border-border/50">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Articles Count</span>
+                  <span className="text-2xl font-black text-foreground tracking-tight">{totalArticles.toLocaleString()}</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-background/50 border border-border/50">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Crawl Sources</span>
+                  <span className="text-2xl font-black text-foreground tracking-tight">{totalSources}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Widget 2: Trending Categories Radar */}
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm">
+              <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
+                <Globe className="h-4.5 w-4.5 text-emerald-500" /> Signal Categories
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {categories.map((cat) => (
                   <Link
-                    key={article.id}
-                    href={`/news/${article.slug}`}
-                    className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:bg-muted/30 hover:border-border/80 transition-all duration-200 group"
+                    key={cat.slug}
+                    href={`/news?category=${cat.slug}`}
+                    className="px-2.5 py-1 rounded bg-muted/65 hover:bg-muted text-[10px] font-semibold text-muted-foreground hover:text-foreground transition duration-200 border border-border/40"
                   >
-                    {/* Rank number */}
-                    <span className="text-2xl font-black text-muted-foreground/30 tabular-nums leading-none mt-0.5 select-none min-w-[1.5rem]">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      {article.category && (
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                          {article.category.name}
-                        </span>
-                      )}
-                      <p className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5 group-hover:text-muted-foreground transition-colors">
-                        {article.title}
-                      </p>
-                      <span className="text-[10px] text-muted-foreground mt-1 block">
-                        {article.sourceName}
-                      </span>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-1 transition-transform group-hover:translate-x-0.5" />
+                    {cat.name}
                   </Link>
                 ))}
               </div>
-              <Link
-                href="/news"
-                id="trending-more-btn"
-                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors group"
-              >
-                Discover more trending stories
-                <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
             </div>
-          )}
+
+            {/* Widget 3: Startup Radar */}
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card/40 backdrop-blur-sm space-y-4 shadow-sm">
+              <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
+                <Sparkles className="h-4.5 w-4.5 text-yellow-500" /> Startup Funding Radar
+              </h3>
+              <div className="space-y-3">
+                {startupArticles.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    No startup specific articles processed yet. Startup signals populate here dynamically when available.
+                  </p>
+                ) : (
+                  startupArticles.map((art) => (
+                    <div key={art.id} className="text-xs leading-relaxed space-y-0.5 border-l-2 border-indigo-500/20 pl-3">
+                      <Link href={`/news/${art.slug}`} className="font-bold text-foreground hover:text-indigo-400 block line-clamp-1">
+                        {art.title}
+                      </Link>
+                      <span className="text-[10px] text-muted-foreground">{art.sourceName}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ──────────────────── FINAL CTA BANNER ───────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24">
-        <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 sm:p-16 text-center shadow-xl">
-          {/* Inner glow */}
-          <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-indigo-600/8 blur-[80px]" />
+      {/* ───────────────────────── PRICING SECTIONS ───────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-border/50 text-center space-y-12">
+        <div className="space-y-3 max-w-3xl mx-auto">
+          <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest bg-indigo-500/10 px-3 py-1 rounded-full">
+            Subscription
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Flexible Plans for Tech Professionals</h2>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            All basic feed readers are free. Upgrade to unlock deep research summaries, custom feeds tracking, and interactive chat.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+          {/* FREE PLAN */}
+          <div className="p-8 rounded-2xl border border-border bg-card/40 backdrop-blur-sm flex flex-col justify-between hover:border-foreground/10 transition-colors duration-200 shadow-sm">
+            <div className="space-y-6 text-left">
+              <div className="space-y-2">
+                <h3 className="text-lg font-extrabold tracking-tight text-foreground">Free Aggregator</h3>
+                <p className="text-xs text-muted-foreground">Monitor essential AI feeds and bookmark highlights.</p>
+              </div>
+              <div className="flex items-baseline">
+                <span className="text-4xl font-extrabold">$0</span>
+                <span className="text-xs text-muted-foreground ml-1">/ month</span>
+              </div>
+              <ul className="space-y-3 pt-4 border-t border-border/60 text-xs font-semibold text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Hourly feed ingestion</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">100-word summaries</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Advanced categorization & search</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                  <span className="line-through decoration-border/60">300-word detailed research reviews</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                  <span className="line-through decoration-border/60">AI Voice Audiobook narration</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                  <span className="line-through decoration-border/60">Interactive AI Chat Assistant</span>
+                </li>
+              </ul>
+            </div>
+            <Link
+              href="/news"
+              className="w-full mt-8 py-3 rounded-xl border border-border bg-muted/20 font-bold text-xs text-center text-muted-foreground hover:bg-muted/30 transition"
+            >
+              Browse News
+            </Link>
           </div>
 
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-background/50 text-xs text-muted-foreground mb-6">
-              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-              Free to explore · No sign-up required
+          {/* PRO PLAN */}
+          <div className="p-8 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.01] dark:bg-indigo-950/[0.01] backdrop-blur-sm flex flex-col justify-between relative shadow-lg ring-1 ring-indigo-500/20">
+            <div className="absolute top-0 right-8 -translate-y-1/2 bg-foreground text-background text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+              <Sparkles className="h-3 w-3 text-yellow-500" /> RECOMMENDED
+            </div>
+            
+            <div className="space-y-6 text-left">
+              <div className="space-y-2">
+                <h3 className="text-lg font-extrabold tracking-tight text-foreground">Hub Pro</h3>
+                <p className="text-xs text-muted-foreground">For researchers, builders, and AI investors.</p>
+              </div>
+              <div className="flex items-baseline">
+                <span className="text-4xl font-extrabold">$9.99</span>
+                <span className="text-xs text-muted-foreground ml-1">/ month</span>
+              </div>
+              
+              <ul className="space-y-3 pt-4 border-t border-indigo-500/10 text-xs font-semibold text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Everything in Free plan</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Detailed 300-word summaries</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Custom Private RSS Feeds monitoring</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">AI Voice Audiobook Narration</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Interactive AI Research Assistant chat</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">One-click exports (Notion / PDF)</span>
+                </li>
+              </ul>
             </div>
 
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight mb-5 max-w-3xl mx-auto">
-              The future of AI & Tech is{" "}
+            <Link
+              href="/pricing"
+              className="w-full mt-8 py-3 rounded-xl bg-foreground text-background text-center font-bold text-xs hover:opacity-90 transition shadow-md block"
+            >
+              Upgrade / Test Pro (Sandbox)
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────────────────── FINAL CTA BANNER ──────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-card/30 p-10 sm:p-16 shadow-lg backdrop-blur-sm">
+          {/* Inner glow */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] rounded-full bg-indigo-600/5 blur-[80px]" />
+          </div>
+
+          <div className="relative z-10 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-background/50 text-xs text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
+              <span>No credit card required to explore</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight max-w-3xl mx-auto">
+              The AI & Tech landscape is{" "}
               <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                happening now.
+                shifting today.
               </span>
             </h2>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-              Join thousands of developers, researchers, and founders who use
-              this platform to stay ahead of AI and tech developments.
+            
+            <p className="text-muted-foreground text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
+              Stay ahead. Aggregate from 16 high-quality sources, view digests, and query AI summaries instantly.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
               <Link
                 href="/news"
-                id="cta-final-explore-btn"
-                className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm shadow-md hover:shadow-indigo-500/20 hover:scale-[1.01] transition duration-200"
               >
-                Start Exploring Now
+                Start Ingesting Now
                 <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-1" />
               </Link>
-              <Link
-                href="/news?category=artificial-intelligence"
-                id="cta-final-ai-btn"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-border bg-background/50 font-bold text-sm hover:bg-muted/40 transition-colors duration-200"
-              >
-                Browse AI News
-              </Link>
-            </div>
-
-            {/* Category pills */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-              {[
-                { label: "Artificial Intelligence", slug: "artificial-intelligence" },
-                { label: "Machine Learning", slug: "machine-learning" },
-                { label: "Generative AI", slug: "generative-ai" },
-                { label: "Cloud Computing", slug: "cloud-computing" },
-                { label: "Cybersecurity", slug: "cybersecurity" },
-                { label: "Developer Tools", slug: "developer-tools" },
-                { label: "Startups", slug: "startups" },
-                { label: "Data Science", slug: "data-science" },
-                { label: "Technology", slug: "technology" },
-              ].map((cat) => (
-                <Link
-                  key={cat.slug}
-                  href={`/news?category=${cat.slug}`}
-                  className="px-3 py-1 rounded-full text-[11px] font-medium border border-border bg-card hover:bg-muted hover:border-border/80 transition-all duration-200 text-muted-foreground hover:text-foreground"
-                >
-                  {cat.label}
-                </Link>
-              ))}
             </div>
           </div>
         </div>
