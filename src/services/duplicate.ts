@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma";
 import crypto from "crypto";
 
 // Get lowercase, alphanumeric word tokens longer than 2 characters
-function getTokens(str: string): Set<string> {
+export function getTokens(str: string): Set<string> {
   const cleaned = str
     .toLowerCase()
     .replace(/[^\w\s]/g, "")
@@ -11,16 +11,24 @@ function getTokens(str: string): Set<string> {
   return new Set(cleaned);
 }
 
-// Calculate Jaccard similarity (Intersection over Union) of token sets
+// Calculate Jaccard similarity of two pre-computed token sets
+export function calculateSetJaccard(set1: Set<string>, set2: Set<string>): number {
+  if (set1.size === 0 || set2.size === 0) return 0;
+  let intersectionSize = 0;
+  for (const x of set1) {
+    if (set2.has(x)) {
+      intersectionSize++;
+    }
+  }
+  const unionSize = set1.size + set2.size - intersectionSize;
+  return intersectionSize / unionSize;
+}
+
+// Calculate Jaccard similarity (Intersection over Union) of token sets from strings
 export function calculateJaccardSimilarity(str1: string, str2: string): number {
   const set1 = getTokens(str1);
   const set2 = getTokens(str2);
-  if (set1.size === 0 || set2.size === 0) return 0;
-
-  const intersection = new Set([...set1].filter((x) => set2.has(x)));
-  const union = new Set([...set1, ...set2]);
-
-  return intersection.size / union.size;
+  return calculateSetJaccard(set1, set2);
 }
 
 // Create a stable SHA-256 hash of cleaned text content (first 500 chars)
@@ -40,54 +48,77 @@ export interface DuplicateCheckInput {
   content: string;
 }
 
+export interface PreloadedRecentArticle {
+  title: string;
+  content: string;
+  titleTokens: Set<string>;
+  contentTokens: Set<string>;
+}
+
 /**
  * Checks if an incoming article is a duplicate based on:
  * 1. Exact originalUrl match
  * 2. Recent title similarity (Jaccard > threshold)
- * 3. Recent content hash match (if we store hashes or compute similarity on content)
+ * 3. Recent content similarity (Jaccard > 0.90)
  */
 export async function checkIsDuplicate(
   article: DuplicateCheckInput,
-  similarityThreshold = 0.85
+  similarityThreshold = 0.85,
+  preloadedUrls?: Set<string>,
+  preloadedRecent?: PreloadedRecentArticle[]
 ): Promise<boolean> {
-  // 1. Check exact URL match (globally across all records)
-  const exactUrlMatch = await prisma.article.findUnique({
-    where: { originalUrl: article.originalUrl },
-  });
+  // 1. Check exact URL match
+  if (preloadedUrls) {
+    if (preloadedUrls.has(article.originalUrl)) {
+      return true;
+    }
+  } else {
+    const exactUrlMatch = await prisma.article.findUnique({
+      where: { originalUrl: article.originalUrl },
+    });
 
-  if (exactUrlMatch) {
-    return true;
+    if (exactUrlMatch) {
+      return true;
+    }
   }
 
-  // 2. Fetch articles from the last 7 days to run similarity comparisons
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Compute incoming tokens
+  const incomingTitleTokens = getTokens(article.title);
+  const incomingContentTokens = getTokens(article.content.slice(0, 1000));
 
-  const recentArticles = await prisma.article.findMany({
-    where: {
-      publishedAt: {
-        gte: sevenDaysAgo,
+  // 2. Fetch recent articles from the last 7 days to run similarity comparisons if not preloaded
+  const recentArticles = preloadedRecent || await (async () => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const dbRecent = await prisma.article.findMany({
+      where: {
+        publishedAt: {
+          gte: sevenDaysAgo,
+        },
       },
-    },
-    select: {
-      title: true,
-      content: true,
-    },
-  });
+      select: {
+        title: true,
+        content: true,
+      },
+    });
 
-  // Check title similarity
+    return dbRecent.map((r) => ({
+      title: r.title,
+      content: r.content,
+      titleTokens: getTokens(r.title),
+      contentTokens: getTokens(r.content.slice(0, 1000)),
+    }));
+  })();
+
+  // Check title & content similarity
   for (const recent of recentArticles) {
-    const titleSim = calculateJaccardSimilarity(article.title, recent.title);
+    const titleSim = calculateSetJaccard(incomingTitleTokens, recent.titleTokens);
     if (titleSim >= similarityThreshold) {
       console.log(`Duplicate detected (Title similarity: ${titleSim.toFixed(2)}): "${article.title}" vs "${recent.title}"`);
       return true;
     }
 
-    // Check content similarity using Jaccard on content snippets
-    const contentSim = calculateJaccardSimilarity(
-      article.content.slice(0, 1000),
-      recent.content.slice(0, 1000)
-    );
+    const contentSim = calculateSetJaccard(incomingContentTokens, recent.contentTokens);
     if (contentSim >= 0.90) {
       console.log(`Duplicate detected (Content similarity: ${contentSim.toFixed(2)}): "${article.title}"`);
       return true;

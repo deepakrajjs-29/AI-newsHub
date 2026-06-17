@@ -53,7 +53,7 @@ Return ONLY the JSON object. Do not include markdown code block formatting (like
   const userPrompt = `Title: ${title}\n\nContent:\n${trimmedContent}`;
 
   try {
-    const defaultModel = process.env.GEMINI_API_KEY ? "gemini-1.5-flash" : "gpt-4o-mini";
+    const defaultModel = process.env.GEMINI_API_KEY ? "gemini-2.5-flash" : "gpt-4o-mini";
     const response = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || defaultModel,
       messages: [
@@ -73,8 +73,82 @@ Return ONLY the JSON object. Do not include markdown code block formatting (like
     const validatedResult = AiProcessedSchema.parse(parsedJson);
 
     return validatedResult;
-  } catch (error) {
-    console.error("Error during OpenAI article summarization:", error);
-    return null;
+  } catch (error: any) {
+    console.warn(`Gemini/OpenAI API failed or rate-limited: ${error.message || error}. Using local fallback summarizer.`);
+    return generateFallbackSummary(title, content, categoriesList);
   }
+}
+
+/**
+ * High-quality fallback summarizer using local rule-based text extraction.
+ * Keeps the ingestion running successfully even when API key is exhausted.
+ */
+export function generateFallbackSummary(
+  title: string,
+  content: string,
+  categoriesList: string[]
+): AiProcessedResult {
+  // 1. Clean HTML tags
+  const cleanContent = content
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // 2. Extract sentences
+  const sentences = cleanContent.split(/[.!?]\s+/).filter((s) => s.length > 5);
+
+  const summaryShort = sentences.slice(0, 2).join(". ") + ".";
+  const summaryLong = sentences.slice(0, 4).join(". ") + ".";
+
+  // 3. Map category using keyword matching
+  let categoryName = categoriesList[0] || "Technology";
+  const lowerTitle = title.toLowerCase();
+  const lowerContent = cleanContent.toLowerCase();
+
+  const categoryKeywords: Record<string, string[]> = {
+    "Artificial Intelligence": ["artificial intelligence", "openai", "anthropic", "gpt-4", "gpt-5", "sora", "llm", "claude", "gemini", "deepmind", "copilot", "chatgpt", "cohere", "mistral", "llama", "deepseek"],
+    "Machine Learning": ["machine learning", "neural network", "transformer", "pytorch", "tensorflow", "training", "weights", "fine-tuning", "inference", "reinforcement learning", "supervised"],
+    "Generative AI": ["generative ai", "midjourney", "stable diffusion", "dall-e", "text-to-image", "text-to-video", "diffusion model", "image generation", "video generation"],
+    "Cloud Computing": ["cloud", "aws", "amazon web services", "azure", "google cloud", "serverless", "s3", "lambda", "infrastructure", "kubernetes", "docker"],
+    "Cybersecurity": ["cybersecurity", "security", "vulnerability", "malware", "ransomware", "exploit", "hack", "breach", "cve", "phishing", "firewall"],
+    "Developer Tools": ["developer tools", "git", "github", "npm", "visual studio", "vscode", "coding", "debugging", "database", "postgres", "mongodb", "rust", "typescript", "framework"],
+    "Startups": ["startup", "funding", "venture", "acquisition", "funding round", "ipo", "founder", "y combinator", "raised", "accelerator"],
+    "Data Science": ["data science", "analytics", "scraping", "pandas", "numpy", "dataframe", "matplotlib", "tableau", "bi", "visualisation"],
+    "Technology": ["technology", "consumer electronics", "smartphone", "wired", "gadget", "chips", "hardware"]
+  };
+
+  for (const cat of categoriesList) {
+    const keywords = categoryKeywords[cat];
+    if (keywords) {
+      const match = keywords.some((kw) => lowerTitle.includes(kw) || lowerContent.includes(kw));
+      if (match) {
+        categoryName = cat;
+        break;
+      }
+    }
+  }
+
+  // 4. Extract tags
+  const titleWords = lowerTitle
+    .replace(/[^\w\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !["with", "from", "that", "this", "your", "what", "their", "about", "uses"].includes(w));
+
+  const tags = Array.from(new Set([
+    categoryName.toLowerCase(),
+    ...titleWords.slice(0, 4)
+  ])).slice(0, 5);
+
+  // 5. Generate SEO meta tags
+  const seoTitle = `${title.slice(0, 45)} | AI News Hub`;
+  const seoDescription = cleanContent.slice(0, 150) + "...";
+
+  return {
+    summaryShort: summaryShort.slice(0, 200),
+    summaryLong: summaryLong.slice(0, 600),
+    categoryName,
+    tags,
+    seoTitle: seoTitle.slice(0, 60),
+    seoDescription: seoDescription.slice(0, 160),
+  };
 }

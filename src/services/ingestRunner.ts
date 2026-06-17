@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { fetchAndNormalizeFeed } from "./rss";
-import { checkIsDuplicate } from "./duplicate";
+import { checkIsDuplicate, PreloadedRecentArticle, getTokens } from "./duplicate";
 import { summarizeArticleWithAI } from "./ai";
 
 // Standard URL-friendly slug generator
@@ -74,10 +74,44 @@ export async function runIngestion(): Promise<IngestReport> {
       const feedArticles = await fetchAndNormalizeFeed(source.rssUrl, source.name);
       articlesFetched += feedArticles.length;
 
+      if (feedArticles.length === 0) {
+        continue;
+      }
+
+      // Pre-load existing URLs in database matching this feed's URLs to optimize N+1 queries
+      const feedUrls = feedArticles.map((a) => a.originalUrl);
+      const existingArticles = await prisma.article.findMany({
+        where: { originalUrl: { in: feedUrls } },
+        select: { originalUrl: true },
+      });
+      const preloadedUrls = new Set(existingArticles.map((a) => a.originalUrl));
+
+      // Pre-load recent articles from the last 7 days once for this feed
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const dbRecent = await prisma.article.findMany({
+        where: {
+          publishedAt: {
+            gte: sevenDaysAgo,
+          },
+        },
+        select: {
+          title: true,
+          content: true,
+        },
+      });
+
+      const preloadedRecent: PreloadedRecentArticle[] = dbRecent.map((r) => ({
+        title: r.title,
+        content: r.content,
+        titleTokens: getTokens(r.title),
+        contentTokens: getTokens(r.content.slice(0, 1000)),
+      }));
+
       for (const rawArticle of feedArticles) {
         try {
-          // Check if article is duplicate
-          const isDuplicate = await checkIsDuplicate(rawArticle);
+          // Check if article is duplicate using optimized in-memory check
+          const isDuplicate = await checkIsDuplicate(rawArticle, 0.85, preloadedUrls, preloadedRecent);
           if (isDuplicate) {
             continue;
           }
@@ -96,21 +130,30 @@ export async function runIngestion(): Promise<IngestReport> {
           });
 
           // Insert raw article as pending
-          const newArticle = await prisma.article.create({
-            data: {
-              title: rawArticle.title,
-              slug,
-              content: rawArticle.content,
-              sourceId: source.id,
-              sourceName: source.name,
-              sourceUrl: source.rssUrl,
-              originalUrl: rawArticle.originalUrl,
-              featuredImage: rawArticle.featuredImage,
-              publishedAt: rawArticle.publishedAt,
-              categoryId: matchedCategory?.id || null,
-              status: "pending",
-            },
-          });
+          let newArticle;
+          try {
+            newArticle = await prisma.article.create({
+              data: {
+                title: rawArticle.title,
+                slug,
+                content: rawArticle.content,
+                sourceId: source.id,
+                sourceName: source.name,
+                sourceUrl: source.rssUrl,
+                originalUrl: rawArticle.originalUrl,
+                featuredImage: rawArticle.featuredImage,
+                publishedAt: rawArticle.publishedAt,
+                categoryId: matchedCategory?.id || null,
+                status: "pending",
+              },
+            });
+          } catch (dbErr: any) {
+            if (dbErr.code === "P2002" || dbErr.message?.includes("Unique constraint")) {
+              console.log(`Article "${rawArticle.title}" was already ingested (concurrently). Skipping.`);
+              continue;
+            }
+            throw dbErr;
+          }
 
           // Create processing job record
           await prisma.processingJob.create({
@@ -118,6 +161,15 @@ export async function runIngestion(): Promise<IngestReport> {
               articleId: newArticle.id,
               status: "pending",
             },
+          });
+
+          // Update local sets to prevent duplication within the same feed file
+          preloadedUrls.add(rawArticle.originalUrl);
+          preloadedRecent.push({
+            title: rawArticle.title,
+            content: rawArticle.content,
+            titleTokens: getTokens(rawArticle.title),
+            contentTokens: getTokens(rawArticle.content.slice(0, 1000)),
           });
 
           articlesSaved++;
@@ -279,6 +331,9 @@ export async function runIngestion(): Promise<IngestReport> {
           });
         }
       }
+
+      // Add a rate-limit delay (2 seconds) between AI calls to avoid 429 errors
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
     const durationMs = Date.now() - startTime;

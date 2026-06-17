@@ -1,6 +1,11 @@
 import Parser from "rss-parser";
 
 const parser = new Parser({
+  timeout: 10000,
+  headers: {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/rss+xml, application/rdf+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.1"
+  },
   customFields: {
     item: [
       ["media:content", "mediaContent", { keepArray: true }],
@@ -32,7 +37,25 @@ export async function fetchAndNormalizeFeed(
   sourceName: string
 ): Promise<NormalizedArticle[]> {
   try {
-    const feed = await parser.parseURL(rssUrl);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(rssUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/rss+xml, application/rdf+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.1"
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP status ${response.status}`);
+    }
+
+    const xmlString = await response.text();
+    const feed = await parser.parseString(xmlString);
     const articles: NormalizedArticle[] = [];
 
     for (const item of feed.items) {

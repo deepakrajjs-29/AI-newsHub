@@ -15,6 +15,7 @@ interface NewsSearchFiltersProps {
   currentQuery: string;
   currentCategory: string;
   currentSort: string;
+  currentTimeFilter?: string;
 }
 
 export default function NewsSearchFilters({
@@ -22,13 +23,14 @@ export default function NewsSearchFilters({
   currentQuery,
   currentCategory,
   currentSort,
+  currentTimeFilter = "all",
 }: NewsSearchFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(currentQuery);
 
-  const updateFilters = (updates: { query?: string; category?: string; sort?: string; page?: string }) => {
+  const updateFilters = (updates: { query?: string; category?: string; sort?: string; time?: string; page?: string }) => {
     const params = new URLSearchParams(searchParams.toString());
     
     // Reset page on filter changes
@@ -44,6 +46,11 @@ export default function NewsSearchFilters({
       else params.delete("category");
     }
     
+    if (updates.time !== undefined) {
+      if (updates.time && updates.time !== "all") params.set("time", updates.time);
+      else params.delete("time");
+    }
+
     if (updates.sort !== undefined) {
       if (updates.sort) params.set("sort", updates.sort);
       else params.delete("sort");
@@ -79,6 +86,32 @@ export default function NewsSearchFilters({
           {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Search"}
         </button>
       </form>
+
+      {/* Time-based Filters */}
+      <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-border/40">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mr-2">
+          Time Period:
+        </span>
+        {[
+          { label: "All News", value: "all" },
+          { label: "Today", value: "today" },
+          { label: "This Week", value: "week" },
+          { label: "This Month", value: "month" },
+        ].map((t) => (
+          <button
+            key={t.value}
+            disabled={isPending}
+            onClick={() => updateFilters({ time: t.value })}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+              currentTimeFilter === t.value
+                ? "bg-foreground text-background border-foreground font-semibold"
+                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
       {/* Category Pills & Sort Select */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">

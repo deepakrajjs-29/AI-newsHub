@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "../../../lib/prisma";
 import NewsCard from "../../../features/news/NewsCard";
 import { Calendar, ExternalLink, ArrowLeft, Tag, BookOpen, BrainCircuit } from "lucide-react";
+import InteractiveArticlePortal from "../../../components/news/InteractiveArticlePortal";
+import { formatRelativeTime } from "../../../lib/utils";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -94,13 +96,7 @@ export default async function ArticlePage({ params }: PageProps) {
     },
   });
 
-  const formattedDate = new Date(article.publishedAt).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedDate = formatRelativeTime(article.publishedAt);
 
   const gradientStyle = !article.featuredImage
     ? { background: generateAbstractGradient(article.title) }
@@ -170,23 +166,8 @@ export default async function ArticlePage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Detailed Insights Summary */}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2 border-b border-border pb-3">
-            <BookOpen className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-bold text-lg sm:text-xl">In-Depth Analysis</h3>
-          </div>
-          <div className="text-sm sm:text-base leading-relaxed text-muted-foreground space-y-4">
-            {article.summaryLong ? (
-              // Format long summary by splitting into paragraphs or display as is
-              article.summaryLong.split("\n").map((para, idx) => (
-                <p key={idx}>{para.trim()}</p>
-              ))
-            ) : (
-              <p>Full detailed summary will be processed shortly by the background ingestion workers.</p>
-            )}
-          </div>
-        </div>
+        {/* Interactive Client Portal (Speech, Lock overlay, Exporters, AI Chat Assistant) */}
+        <InteractiveArticlePortal article={article} />
 
         {/* Action Call for full original article */}
         <div className="pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">

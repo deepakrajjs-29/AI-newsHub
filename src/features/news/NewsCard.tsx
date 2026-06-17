@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Calendar, ExternalLink, ArrowRight } from "lucide-react";
+import { formatRelativeTime } from "../../lib/utils";
 
 export interface ArticlePreview {
   id: string;
@@ -33,11 +34,7 @@ function generateAbstractGradient(text: string): string {
 }
 
 export default function NewsCard({ article, featured = false }: NewsCardProps) {
-  const formattedDate = new Date(article.publishedAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const formattedDate = formatRelativeTime(article.publishedAt);
 
   const gradientStyle = !article.featuredImage
     ? { background: generateAbstractGradient(article.title) }

@@ -12,6 +12,7 @@ interface NewsPageProps {
     category?: string;
     sort?: string;
     page?: string;
+    time?: string;
   }>;
 }
 
@@ -20,6 +21,7 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   const currentQuery = resolvedParams.query || "";
   const currentCategory = resolvedParams.category || "";
   const currentSort = resolvedParams.sort === "asc" ? "asc" : "desc";
+  const currentTimeFilter = resolvedParams.time || "all";
   const currentPage = Math.max(1, parseInt(resolvedParams.page || "1", 10));
   
   const pageSize = 9;
@@ -32,8 +34,10 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   });
 
   // 2. Build where filter clauses
+  // Show all articles (processed + pending) so content is visible even during AI processing
+  // Exclude failed articles
   const whereClause: any = {
-    status: "processed",
+    status: { not: "failed" },
   };
 
   if (currentCategory) {
@@ -42,11 +46,48 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
     };
   }
 
+  // Time-based filtering: Today (last 24 hours), This Week (last 7 days), This Month (last 30 days)
+  if (currentTimeFilter === "today") {
+    const todayLimit = new Date();
+    todayLimit.setHours(todayLimit.getHours() - 24);
+    whereClause.publishedAt = {
+      gte: todayLimit,
+    };
+  } else if (currentTimeFilter === "week") {
+    const weekLimit = new Date();
+    weekLimit.setDate(weekLimit.getDate() - 7);
+    whereClause.publishedAt = {
+      gte: weekLimit,
+    };
+  } else if (currentTimeFilter === "month") {
+    const monthLimit = new Date();
+    monthLimit.setDate(monthLimit.getDate() - 30);
+    whereClause.publishedAt = {
+      gte: monthLimit,
+    };
+  }
+
+  // Improved search by Article title, Keywords/Tags, Source name, or Category name
   if (currentQuery) {
     whereClause.OR = [
       { title: { contains: currentQuery, mode: "insensitive" } },
       { summary: { contains: currentQuery, mode: "insensitive" } },
       { content: { contains: currentQuery, mode: "insensitive" } },
+      { sourceName: { contains: currentQuery, mode: "insensitive" } },
+      {
+        category: {
+          name: { contains: currentQuery, mode: "insensitive" },
+        },
+      },
+      {
+        tags: {
+          some: {
+            tag: {
+              name: { contains: currentQuery, mode: "insensitive" },
+            },
+          },
+        },
+      },
     ];
   }
 
@@ -72,11 +113,17 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
+  // Total article count (without any filters) for display in empty state
+  const totalAvailable = articles.length === 0
+    ? await prisma.article.count({ where: { status: { not: "failed" } } })
+    : null;
+
   // Helper to construct pagination URLs
   const getPaginationUrl = (pageNumber: number) => {
     const params = new URLSearchParams();
     if (currentQuery) params.set("query", currentQuery);
     if (currentCategory) params.set("category", currentCategory);
+    if (currentTimeFilter && currentTimeFilter !== "all") params.set("time", currentTimeFilter);
     if (currentSort !== "desc") params.set("sort", currentSort);
     params.set("page", pageNumber.toString());
     return `/news?${params.toString()}`;
@@ -104,6 +151,7 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
         currentQuery={currentQuery}
         currentCategory={currentCategory}
         currentSort={currentSort}
+        currentTimeFilter={currentTimeFilter}
       />
 
       {articles.length === 0 ? (
@@ -112,20 +160,29 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
           <div className="p-3 rounded-full bg-muted text-muted-foreground">
             <Inbox className="h-8 w-8" />
           </div>
-          <div className="space-y-1 max-w-sm">
-            <h3 className="text-lg font-bold text-foreground">No articles found</h3>
+          <div className="space-y-2 max-w-md">
+            <h3 className="text-lg font-bold text-foreground">No articles match these filters</h3>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              We couldn't find any articles matching your filters. Try clearing search text or choosing another category.
+              {currentTimeFilter === "today"
+                ? "No articles were published in the last 24 hours for this filter."
+                : currentTimeFilter === "week"
+                ? "No articles were published in the last 7 days for this filter."
+                : currentTimeFilter === "month"
+                ? "No articles were published in the last 30 days for this filter."
+                : "We couldn't find any articles matching your search or category filter."}
+              {totalAvailable !== null && totalAvailable > 0 && (
+                <>
+                  {" "}Browse all <strong className="text-foreground">{totalAvailable.toLocaleString()}</strong> available articles instead.
+                </>
+              )}
             </p>
           </div>
-          {(currentQuery || currentCategory) && (
-            <Link
-              href="/news"
-              className="px-4 py-2 rounded-lg bg-foreground text-background text-xs font-semibold hover:opacity-90 transition"
-            >
-              Reset All Filters
-            </Link>
-          )}
+          <Link
+            href="/news"
+            className="px-5 py-2.5 rounded-lg bg-foreground text-background text-xs font-semibold hover:opacity-90 transition"
+          >
+            View All Articles
+          </Link>
         </div>
       ) : (
         /* Articles Grid list */
