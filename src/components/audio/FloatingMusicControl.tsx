@@ -28,7 +28,7 @@ export default function FloatingMusicControl() {
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center transition-all duration-500 ease-out"
+      className="fixed bottom-6 right-20 z-50 flex items-center transition-all duration-500 ease-out"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

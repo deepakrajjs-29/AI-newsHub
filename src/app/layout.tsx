@@ -6,6 +6,7 @@ import Footer from "../components/layout/Footer";
 import { AudioProvider } from "@/lib/AudioContext";
 import FloatingMusicControl from "@/components/audio/FloatingMusicControl";
 import ScrollReveal from "@/components/common/ScrollReveal";
+import JarvisAssistant from "@/components/layout/JarvisAssistant";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,6 +68,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <FloatingMusicControl />
+          <JarvisAssistant />
         </AudioProvider>
       </body>
     </html>
