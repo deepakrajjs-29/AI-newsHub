@@ -107,7 +107,7 @@ PLATFORM INFORMATION:
 
 CONTEXTUAL INFORMATION:
 - Current Page URL: ${currentUrl || "Unknown"}
-${currentArticle ? `- Current Article being viewed:\n  Title: ${currentArticle.title}\n  Source: ${currentArticle.sourceName}\n  Summary: ${currentArticle.summary}\n  Content: ${currentArticle.content.slice(0, 8000)}` : ""}
+${currentArticle ? `\n- Current Article:\n  Title: ${currentArticle.title}\n  Source: ${currentArticle.sourceName}\n  Summary: ${currentArticle.summary}\n  Content Preview: ${currentArticle.content.slice(0, 2500)}` : ""}
 - Available Categories: ${categories.map(c => c.name).join(", ")}
 - Active Sources: ${sources.map(s => s.name).join(", ")}
 - Relevant / Latest Database Articles:
@@ -142,6 +142,7 @@ INSTRUCTIONS:
           model: process.env.OPENAI_MODEL || defaultModel,
           messages: formattedMessages as any,
           temperature: 0.45,
+          max_tokens: 600,
         });
         break;
       } catch (err: any) {

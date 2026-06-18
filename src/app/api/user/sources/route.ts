@@ -42,10 +42,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Gated to Pro tier
-    if (profile.tier !== "pro") {
-      return NextResponse.json({ error: "Forbidden: Custom feeds are a Pro tier feature." }, { status: 403 });
-    }
+    // Gated check removed for MVP growth phase (all features free)
 
     const body = await request.json();
     const { name, rssUrl, category } = body;

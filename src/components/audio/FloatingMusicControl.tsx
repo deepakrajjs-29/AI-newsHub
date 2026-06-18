@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAudio } from '@/lib/AudioContext';
 import { Play, Pause, Volume2, VolumeX, SkipForward, SkipBack, Music } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function FloatingMusicControl() {
   const pathname = usePathname();
@@ -20,9 +21,20 @@ export default function FloatingMusicControl() {
   } = useAudio();
 
   const [isHovered, setIsHovered] = useState(false);
+  const [session, setSession] = useState<any>(null);
 
-  // Hide on auth page
-  if (pathname?.startsWith('/auth')) {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Hide on auth page or if not logged in
+  if (pathname?.startsWith('/auth') || !session) {
     return null;
   }
 

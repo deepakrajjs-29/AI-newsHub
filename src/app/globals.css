@@ -74,10 +74,27 @@
   * {
     border-color: var(--border);
   }
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    line-height: 1.6;
+  }
+  /* Branded text selection */
+  ::selection {
+    background-color: rgba(99, 102, 241, 0.2);
+    color: var(--foreground);
+  }
+  /* Accessible focus ring */
+  :focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
@@ -98,34 +115,34 @@
 
 /* Smooth custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.25);
+  border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background: rgba(99, 102, 241, 0.5);
 }
 
-/* Premium Hover Bounce */
+/* Premium Hover Lift */
 .hover-card-bounce {
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
 }
 .hover-card-bounce:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 40px -15px rgba(129, 140, 248, 0.15);
-  border-color: rgba(129, 140, 248, 0.3) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -12px rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.25) !important;
 }
 
 /* Scroll reveal classes */
 .reveal-on-scroll {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
 }
 
@@ -138,7 +155,7 @@
 .audio-wave-bar {
   display: inline-block;
   width: 3px;
-  background-color: #818cf8; /* indigo-400 */
+  background-color: rgba(99, 102, 241, 0.9);
   border-radius: 9999px;
   transform-origin: bottom;
   animation: bounceEQ 1.2s ease-in-out infinite alternate;

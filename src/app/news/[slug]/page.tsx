@@ -6,6 +6,7 @@ import NewsCard from "../../../features/news/NewsCard";
 import { Calendar, ExternalLink, ArrowLeft, Tag, BookOpen, BrainCircuit } from "lucide-react";
 import InteractiveArticlePortal from "../../../components/news/InteractiveArticlePortal";
 import { formatRelativeTime } from "../../../lib/utils";
+import AuthGate from "../../../components/common/AuthGate";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -166,50 +167,52 @@ export default async function ArticlePage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Interactive Client Portal (Speech, Lock overlay, Exporters, AI Chat Assistant) */}
-        <InteractiveArticlePortal article={article} />
+        <AuthGate>
+          {/* Interactive Client Portal (Speech, Lock overlay, Exporters, AI Chat Assistant) */}
+          <InteractiveArticlePortal article={article} />
 
-        {/* Action Call for full original article */}
-        <div className="pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {article.tags.length > 0 && (
-              <>
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                {article.tags.map((at) => (
-                  <Link
-                    key={at.tagId}
-                    href={`/news?query=${at.tag.name}`}
-                    className="px-2.5 py-1 rounded bg-muted hover:bg-muted/70 text-xs font-semibold text-muted-foreground transition duration-200"
-                  >
-                    #{at.tag.name}
-                  </Link>
+          {/* Action Call for full original article */}
+          <div className="pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {article.tags.length > 0 && (
+                <>
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  {article.tags.map((at) => (
+                    <Link
+                      key={at.tagId}
+                      href={`/news?query=${at.tag.name}`}
+                      className="px-2.5 py-1 rounded bg-muted hover:bg-muted/70 text-xs font-semibold text-muted-foreground transition duration-200"
+                    >
+                      #{at.tag.name}
+                    </Link>
+                  ))}
+                </>
+              )}
+            </div>
+
+            <a
+              href={article.originalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background font-semibold text-xs hover:opacity-90 transition duration-200"
+            >
+              Read Original Full Article <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+
+          {/* Related Articles list */}
+          {relatedArticles.length > 0 && (
+            <div className="pt-12 border-t border-border space-y-6">
+              <h3 className="text-lg sm:text-xl font-bold tracking-tight">Related Articles</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {relatedArticles.map((rel) => (
+                  <NewsCard key={rel.id} article={rel as any} />
                 ))}
-              </>
-            )}
-          </div>
-
-          <a
-            href={article.originalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background font-semibold text-xs hover:opacity-90 transition duration-200"
-          >
-            Read Original Full Article <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        </div>
+              </div>
+            </div>
+          )}
+        </AuthGate>
       </div>
-
-      {/* Related Articles list */}
-      {relatedArticles.length > 0 && (
-        <div className="pt-12 border-t border-border space-y-6">
-          <h3 className="text-lg sm:text-xl font-bold tracking-tight">Related Articles</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {relatedArticles.map((rel) => (
-              <NewsCard key={rel.id} article={rel as any} />
-            ))}
-          </div>
-        </div>
-      )}
     </article>
   );
 }

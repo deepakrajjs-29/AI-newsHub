@@ -34,7 +34,7 @@ export async function GET(request: Request) {
         fullName: user.user_metadata?.full_name || user.user_metadata?.name || null,
         avatarUrl: user.user_metadata?.avatar_url || null,
         role: "user",
-        tier: "free",
+        tier: "pro",
       },
     });
 

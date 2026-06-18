@@ -60,11 +60,9 @@ export default function Header() {
     }
     return pathname.startsWith(path);
   };
-
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "All News", href: "/news" },
-    { name: "Pricing", href: "/pricing" },
   ];
 
   if (session) {
@@ -99,15 +97,15 @@ export default function Header() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className={`text-sm font-medium transition-colors duration-200 ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive(link.href)
-                    ? "text-foreground font-bold border-b-2 border-foreground pb-1 -mb-[18px]"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-muted text-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 {link.name}
@@ -121,11 +119,7 @@ export default function Header() {
             
             {session ? (
               <div className="flex items-center gap-3">
-                {profile?.tier === "pro" && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20">
-                    <Sparkles className="h-3 w-3 text-yellow-500" /> PRO
-                  </span>
-                )}
+
                 <button
                   onClick={handleLogout}
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 text-xs font-semibold transition"

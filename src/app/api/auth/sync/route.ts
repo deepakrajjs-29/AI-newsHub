@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     });
 
     const role = isAdminUser ? "admin" : "user";
-    const defaultTier = isAdminUser ? "pro" : "free";
+    const defaultTier = "pro";
 
     const profile = await prisma.profile.upsert({
       where: { email },

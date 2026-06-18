@@ -289,7 +289,7 @@ ${article.summaryLong || "No long summary available."}
     }
   };
 
-  const isPro = profile?.tier === "pro";
+  const isPro = !!session;
 
   return (
     <div className="space-y-10 w-full">

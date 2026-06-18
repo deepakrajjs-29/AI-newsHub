@@ -382,3 +382,35 @@ export async function runIngestion(): Promise<IngestReport> {
     };
   }
 }
+
+export async function checkAndRunIngestionIfNeeded(): Promise<void> {
+  if (process.env.IS_SCRIPT === "true") {
+    return;
+  }
+
+  try {
+    const lastLog = await prisma.cronLog.findFirst({
+      where: {
+        jobName: "fetch-news",
+        status: "success",
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const sixtyMinutesAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    if (!lastLog || lastLog.createdAt < sixtyMinutesAgo) {
+      console.log("[CRON] Last news ingestion was more than 60 minutes ago. Triggering background refresh...");
+      runIngestion().catch((err) => {
+        console.error("[CRON] Background ingestion error:", err);
+      });
+    } else {
+      console.log("[CRON] News ingestion ran recently (within 60m). Skipping duplicate run.");
+    }
+  } catch (error) {
+    console.error("[CRON] Failed to check news refresh schedule:", error);
+  }
+}
+

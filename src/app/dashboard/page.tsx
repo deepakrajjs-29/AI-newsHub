@@ -34,7 +34,7 @@ import Link from "next/link";
 import { useAudio } from "@/lib/AudioContext";
 
 
-type Tab = "overview" | "bookmarks" | "feeds" | "billing" | "profile" | "music";
+type Tab = "overview" | "bookmarks" | "feeds" | "profile" | "music";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -346,13 +346,12 @@ export default function DashboardPage() {
             </Link>
           </nav>
 
-          {/* Account/Billing settings group */}
+          {/* Account settings group */}
           <nav className="space-y-1">
             <span className="px-3 text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mb-2">
               Settings & Account
             </span>
             {[
-              { id: "billing", label: "Billing & Plans", icon: CreditCard },
               { id: "profile", label: "Account Settings", icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -619,28 +618,8 @@ export default function DashboardPage() {
                 <p className="text-xs text-muted-foreground">Monitor custom private RSS channels with automated AI summaries.</p>
               </div>
 
-              {profile?.tier !== "pro" ? (
-                /* Gated state layout */
-                <div className="p-8 text-center border border-indigo-500/20 bg-indigo-500/[0.01] dark:bg-indigo-950/[0.01] rounded-2xl space-y-6 max-w-xl mx-auto ring-1 ring-indigo-500/20 shadow-md">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                    <Lock className="h-6 w-6" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-bold">Custom RSS Ingest Monitor</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                      Custom private feeds aggregation is a premium feature. Upgrade to the Pro plan to add your own private RSS tracking channels.
-                    </p>
-                  </div>
-                  <Link
-                    href="/pricing"
-                    className="inline-block px-5 py-2.5 rounded-xl bg-foreground text-background font-bold text-xs hover:opacity-90 shadow-sm"
-                  >
-                    Upgrade to Pro (Sandbox)
-                  </Link>
-                </div>
-              ) : (
-                /* Active feed sources layout */
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Active feed sources layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Form registration */}
                   <div className="p-6 rounded-2xl border border-border bg-card/45 backdrop-blur-sm space-y-4 shadow-sm h-fit">
                     <h3 className="font-extrabold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -739,76 +718,12 @@ export default function DashboardPage() {
                               </td>
                             </tr>
                           ))
-                        )}
-                      </tbody>
+                        )}                      </tbody>
                     </table>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* ────────────────── BILLING TAB PANEL ────────────────── */}
-          {activeTab === "billing" && (
-            <div className="space-y-6">
-              <div className="space-y-1">
-                <h2 className="text-2xl font-extrabold tracking-tight">Billing & Plans</h2>
-                <p className="text-xs text-muted-foreground">Manage your plan features and billing upgrades.</p>
               </div>
-
-              <div className="max-w-xl p-6 border border-border bg-card/45 backdrop-blur-sm rounded-2xl space-y-6 shadow-sm">
-                <h3 className="font-extrabold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 select-none">
-                  <CreditCard className="h-4.5 w-4.5 text-indigo-500" /> Active Membership
-                </h3>
-                
-                {/* Credit card styling panel */}
-                <div className="p-5 rounded-2xl border border-border flex items-center justify-between bg-background">
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">Active Plan</span>
-                    <p className="text-lg font-black capitalize">{profile?.tier} Membership</p>
-                  </div>
-                  <div>
-                    {profile?.tier === "pro" ? (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold ring-1 ring-indigo-500/20">
-                        Pro Subscription
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-bold">
-                        Free Aggregator
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {profile?.tier === "pro" ? (
-                  <div className="space-y-4">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Your Sandbox billing plan renews monthly. To cancel your Pro sandbox tier membership, click the downgrade button below. This will instantly return your profile to the Free tier.
-                    </p>
-                    <button
-                      onClick={handleDowngrade}
-                      className="px-4 py-2 border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 text-destructive text-xs font-semibold rounded-xl transition"
-                    >
-                      Downgrade to Free Plan
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Unlock Notion markdown exports, PDF printer, AI voice narrator player, custom RSS monitoring, and the interactive Gemini chat terminal.
-                    </p>
-                    <Link
-                      href="/pricing"
-                      className="inline-block px-5 py-2.5 rounded-xl bg-foreground text-background text-xs font-bold hover:opacity-90 shadow-md"
-                    >
-                      Configure Sandbox Upgrade
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
+            )}
           {/* ────────────────── ACCOUNT SETTINGS TAB PANEL ────────────────── */}
           {activeTab === "profile" && (
             <div className="space-y-6">

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bot, X, Send, Sparkles, MessageSquare, ArrowRight, CornerDownLeft } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -16,6 +17,17 @@ export default function JarvisAssistant() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [isArticlePage, setIsArticlePage] = useState(false);
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,7 +96,7 @@ export default function JarvisAssistant() {
       console.error('JARVIS Chat error:', err);
       setChatHistory(prev => [
         ...prev,
-        { role: 'assistant', content: `⚠️ **Error:** ${err.message || 'Unable to connect to JARVIS. Please verify your Gemini API configurations.'}` }
+        { role: 'assistant', content: `I'm having trouble connecting right now. Please try again in a moment, or browse the [News Archive](/news) directly while I recover.` }
       ]);
     } finally {
       setLoading(false);
@@ -120,8 +132,8 @@ export default function JarvisAssistant() {
     return <div dangerouslySetInnerHTML={{ __html: html }} />;
   };
 
-  // Hide on auth pages
-  if (pathname?.startsWith('/auth')) {
+  // Hide on auth pages or if not logged in
+  if (pathname?.startsWith('/auth') || !session) {
     return null;
   }
 
