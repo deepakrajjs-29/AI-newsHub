@@ -161,7 +161,7 @@ export default function DashboardPage() {
 
   const handleAddSource = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session || profile?.tier !== "pro") return;
+    if (!session || !profile) return;
     setSourceLoading(true);
     setSourceError(null);
 

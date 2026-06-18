@@ -28,7 +28,9 @@ export async function GET(request: Request) {
     // Auto-create profile on first login (upsert pattern)
     const profile = await prisma.profile.upsert({
       where: { email: user.email! },
-      update: {}, // Don't overwrite existing data
+      update: {
+        tier: "pro",
+      },
       create: {
         email: user.email!,
         fullName: user.user_metadata?.full_name || user.user_metadata?.name || null,

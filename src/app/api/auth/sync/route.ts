@@ -37,6 +37,7 @@ export async function POST(request: Request) {
         fullName,
         avatarUrl,
         role,
+        tier: defaultTier,
       },
       create: {
         id: user.id,
