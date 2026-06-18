@@ -131,12 +131,51 @@ INSTRUCTIONS:
 
     const defaultModel = process.env.GEMINI_API_KEY ? "gemini-1.5-flash" : "gpt-4o-mini";
     
-    // Call AI completions API
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || defaultModel,
-      messages: formattedMessages as any,
-      temperature: 0.45,
-    });
+    // Call AI completions API with exponential retry logic on rate limits (429)
+    let response = null;
+    let retries = 3;
+    let backoffDelay = 1500;
+    
+    while (retries > 0) {
+      try {
+        response = await openai.chat.completions.create({
+          model: process.env.OPENAI_MODEL || defaultModel,
+          messages: formattedMessages as any,
+          temperature: 0.45,
+        });
+        break;
+      } catch (err: any) {
+        if (err.status === 429 && retries > 1) {
+          console.warn(`Gemini rate limit 429 hit. Retrying in ${backoffDelay}ms... (${retries - 1} retries remaining)`);
+          await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+          retries--;
+          backoffDelay *= 2;
+        } else {
+          console.error("Non-retryable completions error:", err);
+          break;
+        }
+      }
+    }
+
+    if (!response) {
+      // Local fallback responses for offline support or key rate limits
+      let fallbackReply = "I am currently experiencing higher request rates than usual. Here is some general information:\n\n* To search news, use the Search bar in the **[News Archive](/news)** page.\n* You can change background music in the **[Music Lounge](/dashboard)** tab.\n* For the latest updates, please try again in a few seconds!";
+      
+      const lowerMsg = message.toLowerCase();
+      if (lowerMsg.includes("music") || lowerMsg.includes("song") || lowerMsg.includes("play")) {
+        fallbackReply = "You can manage ambient background tracks in the **[Music Lounge](/dashboard)** in your dashboard, or use the floating control badge at the bottom-right corner.";
+      } else if (lowerMsg.includes("search") || lowerMsg.includes("find")) {
+        fallbackReply = "To look up specific topics, navigate to the **[News Archive](/news)** page and enter keywords in the search bar.";
+      } else if (lowerMsg.includes("pricing") || lowerMsg.includes("pro") || lowerMsg.includes("upgrade")) {
+        fallbackReply = "Upgrade options can be simulated in the **[Pricing & Plans](/pricing)** page to unlock detailed summaries, custom RSS monitoring, and speech narration.";
+      } else if (lowerMsg.includes("name") || lowerMsg.includes("who are you")) {
+        fallbackReply = "My name is **JARVIS**, your AI assistant here at AI News Hub! ⚡ How can I help you navigate the site?";
+      } else if (lowerMsg.includes("date") || lowerMsg.includes("today")) {
+        fallbackReply = `Today's date is **${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}**.`;
+      }
+      
+      return NextResponse.json({ reply: fallbackReply });
+    }
 
     const reply = response.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
     return NextResponse.json({ reply });
