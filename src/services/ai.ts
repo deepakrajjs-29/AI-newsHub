@@ -162,8 +162,8 @@ export function generateFallbackSummary(
   const seoDescription = cleanContent.slice(0, 150) + "...";
 
   return {
-    summaryShort: summaryShort.slice(0, 200),
-    summaryLong: summaryLong.slice(0, 600),
+    summaryShort: summaryShort.slice(0, 400),
+    summaryLong: summaryLong.slice(0, 1500),
     categoryName,
     tags,
     seoTitle: seoTitle.slice(0, 60),
