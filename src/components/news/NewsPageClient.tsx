@@ -110,7 +110,7 @@ export default function NewsPageClient({
             <span>News Archive</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Explore AI Developments
+            Explore <span className="gradient-text">AI Developments</span>
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">
             Browse and filter articles from OpenAI, Anthropic, Google, Hugging Face, and arXiv.

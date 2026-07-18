@@ -266,11 +266,8 @@ export default function DashboardPage() {
       
       {/* MOBILE TOP NAVIGATION BAR */}
       <div className="md:hidden w-full absolute top-0 left-0 h-16 border-b border-border bg-card/60 backdrop-blur-md flex items-center justify-between px-4 z-40">
-        <Link href="/" className="flex items-center space-x-2 text-foreground font-bold text-lg">
-          <div className="p-1 rounded-md bg-foreground text-background">
-            <Cpu className="h-4.5 w-4.5" />
-          </div>
-          <span className="font-extrabold">AI News Hub</span>
+        <Link href="/" className="flex items-center">
+          <img src="/logo.png" alt="AI News Hub" className="h-8 w-auto object-contain" />
         </Link>
         <button
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -283,18 +280,15 @@ export default function DashboardPage() {
 
       {/* LEFT NAVIGATION SIDEBAR */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-card/40 backdrop-blur-md flex flex-col justify-between p-4 transform transition-transform duration-300 md:relative md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-border/60 bg-[#07070f] dark:bg-[#07070f] flex flex-col justify-between p-5 transform transition-transform duration-300 md:relative md:translate-x-0 ${
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="space-y-6">
+        <div className="space-y-7">
           {/* Logo Brand */}
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2 text-foreground font-bold text-lg">
-              <div className="p-1.5 rounded-lg bg-foreground text-background shrink-0">
-                <Cpu className="h-4.5 w-4.5" />
-              </div>
-              <span className="font-extrabold">AI News Hub</span>
+            <Link href="/" className="flex items-center">
+              <img src="/logo.png" alt="AI News Hub" className="h-9 w-auto object-contain" />
             </Link>
             <button
               onClick={() => setMobileSidebarOpen(false)}
@@ -324,10 +318,10 @@ export default function DashboardPage() {
                     setActiveTab(tab.id as Tab);
                     setMobileSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition duration-200 border ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
                     activeTab === tab.id
-                      ? "bg-foreground/5 text-foreground border-foreground/10"
-                      : "bg-transparent text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/15"
+                      ? "bg-indigo-500/10 text-indigo-400 shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -362,10 +356,10 @@ export default function DashboardPage() {
                     setActiveTab(tab.id as Tab);
                     setMobileSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition duration-200 border ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
                     activeTab === tab.id
-                      ? "bg-foreground/5 text-foreground border-foreground/10"
-                      : "bg-transparent text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/15"
+                      ? "bg-indigo-500/10 text-indigo-400 shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
