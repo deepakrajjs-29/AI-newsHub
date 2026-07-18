@@ -21,7 +21,7 @@ async function main() {
 
   console.log(`Found ${pendingJobs.length} pending/processing jobs to process.`);
 
-  const concurrency = 25;
+  const concurrency = 5;
   let index = 0;
   let successCount = 0;
 
