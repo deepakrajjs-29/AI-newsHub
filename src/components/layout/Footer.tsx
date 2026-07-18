@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Rss, ExternalLink, Github, Twitter, Linkedin } from "lucide-react";
+import { Rss, ExternalLink, Globe, Share2, Link2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export default function Footer() {
@@ -36,9 +36,9 @@ export default function Footer() {
             {/* Social Links */}
             <div className="flex items-center gap-3 pt-2">
               {[
-                { Icon: Github, href: "#", label: "GitHub" },
-                { Icon: Twitter, href: "#", label: "Twitter" },
-                { Icon: Linkedin, href: "#", label: "LinkedIn" },
+                { Icon: Globe, href: "#", label: "Website" },
+                { Icon: Share2, href: "#", label: "Social" },
+                { Icon: Link2, href: "#", label: "Links" },
               ].map(({ Icon, href, label }) => (
                 <a
                   key={label}
