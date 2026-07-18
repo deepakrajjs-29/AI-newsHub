@@ -41,8 +41,8 @@ export async function summarizeArticleWithAI(
 
   const systemPrompt = `You are a professional AI news editor and technical summary generator.
 Given an article's title and contents, you must analyze and return a JSON object containing:
-1. summaryShort: A concise, engaging summary of the article (maximum 100 words).
-2. summaryLong: A detailed summary of the article outlining key insights, methodology, and significance (maximum 300 words).
+1. summaryShort: A concise, engaging summary of the article (maximum 40 words, around 2 sentences).
+2. summaryLong: A comprehensive, detailed summary of the article outlining key insights, methodology, and significance (minimum 150 words, around 8-10 sentences).
 3. categoryName: Choose the most fitting category for this article from this exact list: [${categoriesList.join(", ")}].
 4. tags: An array of 3 to 6 highly relevant lowercase tags/keywords.
 5. seoTitle: A search-engine optimized title (maximum 60 characters).
@@ -98,7 +98,7 @@ export function generateFallbackSummary(
   const sentences = cleanContent.split(/[.!?]\s+/).filter((s) => s.length > 5);
 
   const summaryShort = sentences.slice(0, 2).join(". ") + ".";
-  const summaryLong = sentences.slice(0, 4).join(". ") + ".";
+  const summaryLong = sentences.slice(0, 8).join(". ") + ".";
 
   // 3. Map category using keyword matching
   let categoryName = categoriesList[0] || "Technology";

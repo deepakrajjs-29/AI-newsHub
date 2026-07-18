@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Calendar, ExternalLink, ArrowRight } from "lucide-react";
-import { formatRelativeTime, getCategoryFallbackImage } from "../../lib/utils";
+import { formatRelativeTime, getDynamicFallbackImage } from "../../lib/utils";
 
 export interface ArticlePreview {
   id: string;
@@ -24,7 +24,7 @@ interface NewsCardProps {
 
 export default function NewsCard({ article, featured = false }: NewsCardProps) {
   const formattedDate = formatRelativeTime(article.publishedAt);
-  const imageUrl = article.featuredImage || getCategoryFallbackImage(article.category?.slug);
+  const imageUrl = article.featuredImage || getDynamicFallbackImage(article.title, article.category?.slug);
 
   if (featured) {
     return (

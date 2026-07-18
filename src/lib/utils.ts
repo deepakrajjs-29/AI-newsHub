@@ -46,22 +46,23 @@ export function formatRelativeTime(dateInput: Date | string | number): string {
 }
 
 /**
- * Returns a high-quality fallback image URL for a category if the article has no featured image.
+ * Returns a dynamic, keyword-relevant fallback image URL using Lorem Flickr based on the article title and category.
  */
-export function getCategoryFallbackImage(categorySlug?: string): string {
-  const fallbacks: Record<string, string> = {
-    "artificial-intelligence": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80",
-    "machine-learning": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80",
-    "generative-ai": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-    "cloud-computing": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
-    "cybersecurity": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80",
-    "developer-tools": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=800&q=80",
-    "startups": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
-    "data-science": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
-    "technology": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
-  };
+export function getDynamicFallbackImage(title: string, categorySlug?: string): string {
+  // Clean special characters and filter out common stop words to extract keywords
+  const stopWords = ["with", "from", "that", "this", "your", "what", "their", "about", "uses", "how", "why", "who", "wants", "says", "deserve", "access"];
+  const words = title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !stopWords.includes(w));
   
-  return categorySlug && fallbacks[categorySlug]
-    ? fallbacks[categorySlug]
-    : "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80";
+  // Extract up to 2 key terms, or fallback to the category name
+  const keywords = words.slice(0, 2).join(",");
+  const fallbackTerm = categorySlug ? categorySlug.replace("-", ",") : "technology";
+  
+  const query = keywords ? `${keywords},${fallbackTerm}` : fallbackTerm;
+  
+  // Append random param to prevent caching duplicate images across different news items
+  return `https://loremflickr.com/800/500/${query}?random=${encodeURIComponent(title.slice(0, 30))}`;
 }

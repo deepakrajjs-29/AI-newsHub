@@ -5,7 +5,7 @@ import { prisma } from "../../../lib/prisma";
 import NewsCard from "../../../features/news/NewsCard";
 import { Calendar, ExternalLink, ArrowLeft, Tag, BookOpen, BrainCircuit } from "lucide-react";
 import InteractiveArticlePortal from "../../../components/news/InteractiveArticlePortal";
-import { formatRelativeTime, getCategoryFallbackImage } from "../../../lib/utils";
+import { formatRelativeTime, getDynamicFallbackImage } from "../../../lib/utils";
 import AuthGate from "../../../components/common/AuthGate";
 
 interface PageProps {
@@ -89,7 +89,7 @@ export default async function ArticlePage({ params }: PageProps) {
   });
 
   const formattedDate = formatRelativeTime(article.publishedAt);
-  const imageUrl = article.featuredImage || getCategoryFallbackImage(article.category?.slug);
+  const imageUrl = article.featuredImage || getDynamicFallbackImage(article.title, article.category?.slug);
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
@@ -145,7 +145,7 @@ export default async function ArticlePage({ params }: PageProps) {
             <h3 className="font-bold text-base sm:text-lg">Executive Summary (AI Generated)</h3>
           </div>
           <p className="text-sm sm:text-base leading-relaxed text-foreground font-medium italic">
-            &ldquo;{article.summary || "Summary generation pending..."}&rdquo;
+            &ldquo;{article.summaryLong || article.summary || "Summary generation pending..."}&rdquo;
           </p>
         </div>
 
