@@ -4,7 +4,7 @@ import { prisma } from "../../../lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || "";
+const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || "placeholder-key";
 const baseURL = process.env.GEMINI_API_KEY
   ? "https://generativelanguage.googleapis.com/v1beta/openai/"
   : undefined;
