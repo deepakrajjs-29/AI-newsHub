@@ -89,7 +89,9 @@ export default async function ArticlePage({ params }: PageProps) {
   });
 
   const formattedDate = formatRelativeTime(article.publishedAt);
-  const imageUrl = article.featuredImage || getDynamicFallbackImage(article.title, article.category?.slug);
+  const imageUrl = (article.featuredImage && article.featuredImage.startsWith("http"))
+    ? article.featuredImage
+    : getDynamicFallbackImage(article.title, article.category?.slug);
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">

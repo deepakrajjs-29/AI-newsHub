@@ -24,7 +24,9 @@ interface NewsCardProps {
 
 export default function NewsCard({ article, featured = false }: NewsCardProps) {
   const formattedDate = formatRelativeTime(article.publishedAt);
-  const imageUrl = article.featuredImage || getDynamicFallbackImage(article.title, article.category?.slug);
+  const imageUrl = (article.featuredImage && article.featuredImage.startsWith("http"))
+    ? article.featuredImage
+    : getDynamicFallbackImage(article.title, article.category?.slug);
 
   if (featured) {
     return (
