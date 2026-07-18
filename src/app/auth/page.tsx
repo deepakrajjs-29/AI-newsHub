@@ -97,10 +97,7 @@ function AuthForm() {
     <div className="w-full max-w-md p-8 rounded-2xl border border-border bg-card/60 backdrop-blur-md shadow-2xl relative z-10 space-y-6 animate-fade-in">
       <div className="text-center space-y-2">
         <Link href="/" className="inline-flex items-center gap-2 text-foreground font-extrabold text-2xl tracking-tight mb-2">
-          <div className="p-2 rounded-xl bg-foreground text-background">
-            <Cpu className="h-6 w-6" />
-          </div>
-          <span>AI News Hub</span>
+          <img src="/logo.png" alt="AI News Hub" className="h-10 w-auto object-contain dark:brightness-110" />
         </Link>
         <h2 className="text-xl font-extrabold tracking-tight">
           {isSignUp ? "Create your account" : "Welcome back"}

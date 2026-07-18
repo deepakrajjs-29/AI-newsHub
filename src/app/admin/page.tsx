@@ -289,8 +289,8 @@ export default function AdminDashboard() {
 
         <div className="w-full max-w-md p-8 rounded-2xl border border-border bg-card shadow-lg relative z-10 space-y-6">
           <div className="text-center space-y-2">
-            <div className="mx-auto p-2 rounded-xl bg-foreground text-background w-max">
-              <Cpu className="h-6 w-6" />
+            <div className="mx-auto w-max mb-2">
+              <img src="/logo.png" alt="AI News Hub" className="h-10 w-auto object-contain dark:brightness-110" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight">Admin Portal</h2>
             <p className="text-sm text-muted-foreground">

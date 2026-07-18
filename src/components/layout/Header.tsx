@@ -89,10 +89,7 @@ export default function Header() {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link href="/" className="flex items-center space-x-2 text-foreground font-bold text-xl tracking-tight">
-              <div className="p-1.5 rounded-lg bg-foreground text-background">
-                <Cpu className="h-5 w-5" />
-              </div>
-              <span className="font-extrabold">AI News Hub</span>
+              <img src="/logo.png" alt="AI News Hub" className="h-8 w-auto object-contain dark:brightness-110" />
             </Link>
           </div>
 

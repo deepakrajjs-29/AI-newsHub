@@ -23,10 +23,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="space-y-3">
             <Link href="/" className="flex items-center gap-2 text-foreground font-bold text-lg">
-              <div className="p-1 rounded-md bg-foreground text-background">
-                <Cpu className="h-4 w-4" />
-              </div>
-              <span>AI News Hub</span>
+              <img src="/logo.png" alt="AI News Hub" className="h-7 w-auto object-contain dark:brightness-110" />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               Automatically aggregating and summarizing the latest in AI & technology from trusted sources — updated every hour.
