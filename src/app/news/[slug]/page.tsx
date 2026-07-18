@@ -5,7 +5,7 @@ import { prisma } from "../../../lib/prisma";
 import NewsCard from "../../../features/news/NewsCard";
 import { Calendar, ExternalLink, ArrowLeft, Tag, BookOpen, BrainCircuit } from "lucide-react";
 import InteractiveArticlePortal from "../../../components/news/InteractiveArticlePortal";
-import { formatRelativeTime } from "../../../lib/utils";
+import { formatRelativeTime, getCategoryFallbackImage } from "../../../lib/utils";
 import AuthGate from "../../../components/common/AuthGate";
 
 interface PageProps {
@@ -48,16 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-// Generate a deterministic abstract gradient background based on the article's title
-function generateAbstractGradient(text: string): string {
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = text.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue1 = Math.abs(hash % 360);
-  const hue2 = (hue1 + 60) % 360;
-  return `linear-gradient(135deg, hsl(${hue1}, 75%, 35%) 0%, hsl(${hue2}, 60%, 15%) 100%)`;
-}
+
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
@@ -98,10 +89,7 @@ export default async function ArticlePage({ params }: PageProps) {
   });
 
   const formattedDate = formatRelativeTime(article.publishedAt);
-
-  const gradientStyle = !article.featuredImage
-    ? { background: generateAbstractGradient(article.title) }
-    : {};
+  const imageUrl = article.featuredImage || getCategoryFallbackImage(article.category?.slug);
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
@@ -141,17 +129,11 @@ export default async function ArticlePage({ params }: PageProps) {
 
       {/* Featured Cover banner */}
       <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-muted shadow-sm">
-        {article.featuredImage ? (
-          <img
-            src={article.featuredImage}
-            alt={article.title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div style={gradientStyle} className="h-full w-full flex items-center justify-center relative">
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
-          </div>
-        )}
+        <img
+          src={imageUrl}
+          alt={article.title}
+          className="h-full w-full object-cover"
+        />
       </div>
 
       {/* AI summaries sections */}

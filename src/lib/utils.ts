@@ -44,3 +44,24 @@ export function formatRelativeTime(dateInput: Date | string | number): string {
     year: "numeric",
   });
 }
+
+/**
+ * Returns a high-quality fallback image URL for a category if the article has no featured image.
+ */
+export function getCategoryFallbackImage(categorySlug?: string): string {
+  const fallbacks: Record<string, string> = {
+    "artificial-intelligence": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=800&q=80",
+    "machine-learning": "https://images.unsplash.com/photo-1527474305487-b87b222841cc?auto=format&fit=crop&w=800&q=80",
+    "generative-ai": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80",
+    "cloud-computing": "https://images.unsplash.com/photo-1600132806370-bf17e65e942f?auto=format&fit=crop&w=800&q=80",
+    "cybersecurity": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
+    "developer-tools": "https://images.unsplash.com/photo-1618401471353-b98aedd07871?auto=format&fit=crop&w=800&q=80",
+    "startups": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=800&q=80",
+    "data-science": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+    "technology": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+  };
+  
+  return categorySlug && fallbacks[categorySlug]
+    ? fallbacks[categorySlug]
+    : "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80";
+}
